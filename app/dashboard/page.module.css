@@ -1,0 +1,426 @@
+/* T-A2 administrator dashboard. Desktop-first but responsive; tokens only.
+   Dense table IS permitted here (desktop admin context,
+   docs/design/direction.md → "Layout"). Stat rows are text-forward
+   label+badge+count rows, never icon-heading cards and never a colored
+   left-border-strip (docs/design/components.md §4.2, hard fails). */
+
+.main {
+  min-height: 100dvh;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.subhead {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* --- Status overview: stat rows, background-color steps for separation --- */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.statsGroup {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.statsGroupHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+.statsList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-surface);
+}
+
+.statsRow:first-child {
+  border-top: none;
+}
+
+.statCount {
+  margin: 0;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* --- Status badge — label + color always, never color alone
+   (docs/design/direction.md "Color and meaning") --- */
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  border: 2px solid currentColor;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.statusBadgeNotSd {
+  composes: statusBadge;
+  color: var(--color-status-not-sd);
+}
+
+.statusBadgeBorderline {
+  composes: statusBadge;
+  color: var(--color-status-borderline);
+}
+
+.statusBadgeSd {
+  composes: statusBadge;
+  color: var(--color-status-sd);
+}
+
+.statusBadgeDraft {
+  composes: statusBadge;
+  color: var(--color-status-draft);
+}
+
+.statusBadgeMuted {
+  composes: statusBadge;
+  color: var(--color-text-muted);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* --- Export --- */
+
+.exportRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.exportControl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.exportButton,
+.exportButtonOutline {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.exportButton {
+  background: var(--color-action);
+  border: 2px solid var(--color-action);
+  color: var(--color-surface-raised);
+}
+
+.exportButton:hover:not(:disabled) {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.exportButton:active:not(:disabled) {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
+}
+
+.exportButtonOutline {
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.exportButtonOutline:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+.exportButtonOutline:active:not(:disabled) {
+  border-color: var(--color-action);
+}
+
+.exportButton:focus-visible,
+.exportButtonOutline:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.exportButton:disabled,
+.exportButtonOutline:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.exportError {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+/* --- Filters --- */
+
+.filtersSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.filterGroupLabel {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.filterButton,
+.filterButtonActive,
+.filterButtonDisabled {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  cursor: pointer;
+}
+
+.filterButton:hover {
+  background: var(--color-surface);
+}
+
+.filterButton:focus-visible,
+.filterButtonActive:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.filterButtonActive {
+  background: var(--color-action);
+  border-color: var(--color-action);
+  color: var(--color-surface-raised);
+}
+
+.filterButtonDisabled {
+  composes: filterButton;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.searchForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.fieldLabel {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.textInput,
+.dateInput {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  font-size: var(--text-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.textInput:focus-visible,
+.dateInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Caseload table (dense — permitted only in this desktop admin
+   context, direction.md → "Layout") --- */
+
+.tableScroll {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface-raised);
+}
+
+.th {
+  text-align: left;
+  padding: 0;
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.thLink {
+  display: block;
+  padding: var(--space-3) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.thLink:hover {
+  background: var(--color-border);
+  color: var(--color-surface-raised);
+}
+
+.thLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.td {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  border-bottom: 1px solid var(--color-surface);
+  color: var(--color-text);
+}
+
+.tdNum {
+  composes: td;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- Pagination --- */
+
+.paginationRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.paginationMeta {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.paginationButtons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* --- State panels (empty / error) -------------------------------------- */
+
+.statePanel {
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+
+.statePanelText {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.errorPanel {
+  composes: statePanel;
+  border-color: var(--color-danger);
+}
+
+.errorPanel .statePanelText {
+  color: var(--color-danger);
+}

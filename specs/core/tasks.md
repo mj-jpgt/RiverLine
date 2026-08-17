@@ -88,7 +88,7 @@ persisted; e2e review spec asserts grouped rendering; all existing gates green.
 
 ### T-A1 Letters  — src/modules/a1-letters/
 Print-first PDF; refuses with explicit state when ordinance_citation is null.
-### T-A2 Dashboard — src/modules/a2-dashboard/
+### [x] T-A2 Dashboard — src/modules/a2-dashboard/
 Status counts, caseload list, CSV export. Map optional, last.
 ### [x] T-A3 SDE export — src/modules/a3-sde-export/
 Export matching verified 12/7 element structure.
