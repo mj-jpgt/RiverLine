@@ -19,6 +19,8 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/db/migrate.mjs",
     "db:seed": "node scripts/db/seed.mjs",
+    "db:backup": "node scripts/ops/backup.mjs",
+    "db:restore": "node scripts/ops/restore.mjs",
     "ingest:parcels": "node scripts/preprocess/ingest-parcels.mjs",
     "verify": "node scripts/verify.mjs"
   },

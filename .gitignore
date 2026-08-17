@@ -19,3 +19,7 @@ public/swe-worker*.js.map
 # swap-in for real object storage (Supabase Storage is not wired up yet) —
 # see docs/journal/2026-08-17-c3-capture.md.
 /uploads/
+
+# T-C6: pg_dump output from `pnpm db:backup` (scripts/ops/backup.mjs). Real
+# database contents, never committed.
+/backups/
