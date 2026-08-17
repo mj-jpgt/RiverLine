@@ -16,7 +16,7 @@ export default defineConfig({
   // what the webServer below points at. Running it here would always fail
   // at "no cost table loaded" for a reason that has nothing to do with a
   // regression — see playwright.determination.config.ts's file header.
-  testIgnore: ["**/offline-capture.spec.ts", "**/determination.spec.ts"],
+  testIgnore: ["**/offline-capture.spec.ts", "**/determination.spec.ts", "**/a1-letters.spec.ts"],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

@@ -14,7 +14,11 @@ import { defineConfig, devices } from "@playwright/test";
 // so it never collides with the normal e2e webServer.
 export default defineConfig({
   testDir: "./test/e2e",
-  testMatch: /determination\.spec\.ts/,
+  // a1-letters.spec.ts joined this gate 2026-08-17: it has the same needs
+  // (riverline_test + TEST-FIXTURE cost table + dedicated dev server) and
+  // cannot run against riverline_dev, whose empty cost_tables state is
+  // intentional (specs/constitution.md §2).
+  testMatch: /(determination|a1-letters)\.spec\.ts/,
   fullyParallel: false,
   retries: 0,
   workers: 1,

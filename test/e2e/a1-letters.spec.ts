@@ -29,7 +29,11 @@ const PRACTICE_ADDRESS = "123 Practice Ln";
 const RESIDENTIAL_ELEMENT_COUNT = 12;
 const TEST_CITATION = "TEST ORDINANCE §00-000 — fixture, not legal text";
 
-const BASE_URL = process.env.A1_BASE_URL ?? "http://localhost:3400";
+// Default matches the determination gate's server (this spec runs under
+// playwright.determination.config.ts / `pnpm test:determination`); the
+// A1_BASE_URL override preserves the isolated port-3400 run documented in
+// docs/journal/2026-08-17-a1-letters.md.
+const BASE_URL = process.env.A1_BASE_URL ?? process.env.DETERMINATION_BASE_URL ?? "http://localhost:3100";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXTERIOR_FIXTURE = path.resolve(__dirname, "../fixtures/photos/sample-exterior.jpg");
