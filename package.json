@@ -14,6 +14,7 @@
     "test:unit": "vitest",
     "test:e2e": "playwright test",
     "test:offline": "node scripts/test-offline.mjs",
+    "test:determination": "node scripts/test-determination.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/db/migrate.mjs",

@@ -49,7 +49,7 @@ stamped. Depreciation per verified Table 3-5.
 authored. Agent implements to them, may add edge-case tests, may not modify them.
 **Acceptance:** `pnpm test:unit --run` — all golden fixtures pass.
 
-### T-C5 M4 determination + adoption workflow
+### [x] T-C5 M4 determination + adoption workflow
 **Module:** src/core/determination/
 **May read:** docs/design/*, schema/core.sql
 **Objective:** Official review queue (borderline-first), full-input review

@@ -1,0 +1,647 @@
+/* M4 official review screen. Desktop-friendly but responsive; dense tables
+   permitted here (docs/design/direction.md "Layout" — outside the field
+   capture flow). Tokens only, no raw hex/arbitrary values, no sliders. */
+
+.main {
+  min-height: 100dvh;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-action);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--color-action-hover);
+}
+
+.backLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.header {
+  margin-bottom: var(--space-5);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-family: var(--font-data);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+/* --- Adopted / superseded banners ---------------------------------- */
+
+.adoptedBanner {
+  margin-bottom: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-status-not-sd);
+  border-radius: var(--radius-md);
+}
+
+.adoptedBannerText {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-surface-raised);
+  line-height: 1.5;
+}
+
+.historyNote {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* --- Result card ------------------------------------------------------ */
+
+.resultCard {
+  margin-bottom: var(--space-5);
+  padding: var(--space-6) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.ratioValue {
+  margin: 0;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.ratioLabel {
+  margin: var(--space-2) 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: 700;
+  border: 2px solid currentColor;
+}
+
+.statusBadgeNotSd {
+  composes: statusBadge;
+  color: var(--color-status-not-sd);
+}
+
+.statusBadgeBorderline {
+  composes: statusBadge;
+  color: var(--color-status-borderline);
+}
+
+.statusBadgeSd {
+  composes: statusBadge;
+  color: var(--color-status-sd);
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.legalLine {
+  margin: var(--space-5) 0 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-surface);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.borderlineNote {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-status-borderline);
+  text-align: left;
+}
+
+/* --- Cards -------------------------------------------------------------- */
+
+.card {
+  margin-bottom: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.cardHeading {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.dt {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.dd {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.ddMono {
+  composes: dd;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.sourceNote {
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-surface);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* --- Per-element table --------------------------------------------------- */
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-base);
+}
+
+.table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.table td {
+  padding: var(--space-3);
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-surface);
+  color: var(--color-text);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.numCell {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.totalRow td {
+  font-weight: 700;
+  border-top: 2px solid var(--color-border);
+  border-bottom: none;
+}
+
+/* --- Photos (thumbnails, click to full) ---------------------------------- */
+
+.photoGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+
+.photoThumbButton {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+}
+
+.photoThumbButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.photoThumb {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.noPhotoNote {
+  margin: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--color-status-borderline);
+  font-weight: 600;
+}
+
+.lightboxOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: rgba(27, 27, 27, 0.85);
+}
+
+.lightboxContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.lightboxImage {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: var(--radius-md);
+}
+
+.lightboxCloseButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.lightboxCloseButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Override controls --------------------------------------------------- */
+
+.overrideToggleButton {
+  min-height: var(--tap-min);
+  margin-top: var(--space-2);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-action);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+}
+
+.overrideToggleButton:hover {
+  background: var(--color-surface);
+}
+
+.overrideToggleButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.overridePanel {
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 2px solid var(--color-status-borderline);
+  border-radius: var(--radius-md);
+}
+
+.overrideHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.overrideLabel {
+  display: block;
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.overrideNumberInput {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.overrideNumberInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.overrideReasonInput {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: calc(var(--tap-min) * 2);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-base);
+  font-family: var(--font-ui);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  resize: vertical;
+}
+
+.overrideReasonInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.fieldError {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+.overrideActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.overrideSaveButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+}
+
+.overrideSaveButton:hover {
+  background: var(--color-action-hover);
+}
+
+.overrideSaveButton:active {
+  background: var(--color-action-pressed);
+}
+
+.overrideSaveButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.overrideSaveButton:disabled {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+.overrideCancelButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.overrideCancelButton:hover {
+  background: var(--color-surface);
+}
+
+.overrideCancelButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.overrideCancelButton:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.valueSourceButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.optionButton,
+.optionButtonSelected {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.optionButtonSelected {
+  background: var(--color-action);
+  border-color: var(--color-action);
+  color: var(--color-surface-raised);
+}
+
+.optionButton:focus-visible,
+.optionButtonSelected:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.optionButton:disabled,
+.optionButtonSelected:disabled {
+  cursor: not-allowed;
+}
+
+/* --- Adopt / Supersede actions + confirmation ---------------------------- */
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.adoptButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-6);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+}
+
+.adoptButton:hover {
+  background: var(--color-action-hover);
+}
+
+.adoptButton:active {
+  background: var(--color-action-pressed);
+}
+
+.adoptButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.adoptButton:disabled {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+.confirmPanel {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 2px solid var(--color-danger);
+  border-radius: var(--radius-md);
+}
+
+.confirmHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.confirmBody {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* --- Blocked / state panels ------------------------------------------------ */
+
+.blockedPanel {
+  margin-bottom: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-status-borderline);
+  border-radius: var(--radius-md);
+}
+
+.blockedHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.blockedText {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.blockedCode {
+  font-family: var(--font-data);
+  background: var(--color-surface);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+/* --- Audit history ---------------------------------------------------------- */
+
+.auditList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.auditItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-surface);
+}
+
+.auditItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.auditAction {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: capitalize;
+}
+
+.auditMeta {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-data);
+}

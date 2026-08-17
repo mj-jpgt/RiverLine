@@ -7,6 +7,7 @@ import path from "node:path";
 import type { PoolClient } from "pg";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { withTenant } from "@/shared/db";
+import { mergeScalarFields, resolveElementMerge, type ScalarSnapshot } from "../_lib/merge";
 
 // Idempotent sync endpoint for the offline capture flow (src/core/capture/).
 // Keyed on assessments.client_id (schema/core.sql unique constraint) —
@@ -27,6 +28,20 @@ import { withTenant } from "@/shared/db";
 //
 // Payload is JSON + base64 photos, not multipart — see
 // src/core/capture/payload.ts's file header for the documented tradeoff.
+//
+// T-C5 added scope (specs/core/tasks.md §2.5, docs/testing/live-test-plan.md
+// OT-4): a SECOND device syncing the same client_id no longer overwrites the
+// whole assessment row wholesale. Scalar fields (gps/water-depth/notes) and
+// each assessment_elements row are merged per field/per element via
+// ../_lib/merge.ts (mergeScalarFields / resolveElementMerge) — an untouched
+// field on the incoming device never clobbers what's on file, a genuinely
+// new value always fills a gap, and where both devices touched the same
+// field the one with the later device_captured_at wins. Photos already got
+// a natural per-photo union for free (content-addressed insert `on conflict
+// (id) do nothing` below, unchanged by this task). When a prior assessment
+// row already existed AND the merge actually resolved a difference (either
+// direction), one audit_log row is written describing which fields/elements
+// were affected — never a silent conflict resolution.
 
 const photoSchema = z.object({
   id: z.string().uuid(),
@@ -159,6 +174,52 @@ export async function POST(request: Request) {
       // calculations rows separately once a cost table exists.
       const costTableVersion: string = costTableRow.rows[0]?.version ?? "NONE";
 
+      // Look up whatever is already on file for this client_id BEFORE
+      // writing anything, so the merge decision (mergeScalarFields /
+      // resolveElementMerge) can compare against it. null = first sync ever
+      // for this client_id (no merge needed, matches pre-existing
+      // behavior/OT-5 idempotency exactly).
+      const existingRes = await client.query(
+        `select id, device_captured_at, gps_lat, gps_lng, gps_accuracy_m,
+                water_depth_interior_in, water_depth_source, notes
+         from assessments where client_id = $1`,
+        [body.clientId],
+      );
+      const existingRow = existingRes.rows[0] as
+        | {
+            id: string;
+            device_captured_at: Date | null;
+            gps_lat: number | null;
+            gps_lng: number | null;
+            gps_accuracy_m: number | null;
+            water_depth_interior_in: number | null;
+            water_depth_source: string | null;
+            notes: string | null;
+          }
+        | undefined;
+
+      const existingScalars: ScalarSnapshot | null = existingRow
+        ? {
+            gpsLat: existingRow.gps_lat,
+            gpsLng: existingRow.gps_lng,
+            gpsAccuracyM: existingRow.gps_accuracy_m,
+            waterDepthInteriorIn: existingRow.water_depth_interior_in,
+            waterDepthSource: existingRow.water_depth_source,
+            notes: existingRow.notes,
+            deviceCapturedAt: existingRow.device_captured_at ? existingRow.device_captured_at.toISOString() : null,
+          }
+        : null;
+      const incomingScalars: ScalarSnapshot = {
+        gpsLat: body.assessment.gpsLat,
+        gpsLng: body.assessment.gpsLng,
+        gpsAccuracyM: body.assessment.gpsAccuracyM,
+        waterDepthInteriorIn: body.assessment.waterDepthInteriorIn,
+        waterDepthSource: body.assessment.waterDepthSource,
+        notes: body.assessment.notes,
+        deviceCapturedAt: body.assessment.deviceCapturedAt,
+      };
+      const { merged, changes: scalarChanges, incomingIsNewer } = mergeScalarFields(existingScalars, incomingScalars);
+
       const assessmentResult = await client.query(
         `insert into assessments (
            structure_id, jurisdiction_id, assessor_user_id, client_id,
@@ -174,7 +235,7 @@ export async function POST(request: Request) {
            water_depth_interior_in = excluded.water_depth_interior_in,
            water_depth_source = excluded.water_depth_source,
            notes = excluded.notes,
-           completed_at = excluded.completed_at,
+           completed_at = coalesce(excluded.completed_at, assessments.completed_at),
            sync_status = 'synced'
          returning id, (xmax = 0) as inserted`,
         [
@@ -182,20 +243,37 @@ export async function POST(request: Request) {
           jurisdictionId,
           userId,
           body.clientId,
-          body.assessment.deviceCapturedAt,
-          body.assessment.gpsLat,
-          body.assessment.gpsLng,
-          body.assessment.gpsAccuracyM,
-          body.assessment.waterDepthInteriorIn,
-          body.assessment.waterDepthSource,
-          body.assessment.notes,
+          merged.deviceCapturedAt,
+          merged.gpsLat,
+          merged.gpsLng,
+          merged.gpsAccuracyM,
+          merged.waterDepthInteriorIn,
+          merged.waterDepthSource,
+          merged.notes,
           body.assessment.completedAt,
         ],
       );
       const assessmentId = assessmentResult.rows[0].id as string;
       const wasAlreadySynced = assessmentResult.rows[0].inserted === false;
 
-      for (const element of body.elements) {
+      // Existing per-element damage map, for resolveElementMerge's
+      // "is this a real gap or a genuine conflict" decision.
+      const existingDamageRes = existingRow
+        ? await client.query(`select element_code, damage_pct from assessment_elements where assessment_id = $1`, [
+            assessmentId,
+          ])
+        : { rows: [] as { element_code: string; damage_pct: number }[] };
+      const existingDamage: Record<string, number> = {};
+      for (const row of existingDamageRes.rows) {
+        existingDamage[row.element_code] = Number(row.damage_pct);
+      }
+      const { toWrite: elementsToWrite, changes: elementChanges } = resolveElementMerge(
+        existingDamage,
+        body.elements,
+        incomingIsNewer,
+      );
+
+      for (const element of elementsToWrite) {
         await client.query(
           `insert into assessment_elements (
              assessment_id, jurisdiction_id, element_code, damage_pct, cost_table_version
@@ -204,6 +282,31 @@ export async function POST(request: Request) {
              damage_pct = excluded.damage_pct,
              cost_table_version = excluded.cost_table_version`,
           [assessmentId, jurisdictionId, element.elementCode, element.damagePct, costTableVersion],
+        );
+      }
+
+      // A genuine multi-device merge event: a prior assessment row already
+      // existed AND the merge actually resolved at least one field/element
+      // difference (in either direction — including "kept the existing,
+      // newer value" cases, which are exactly the conflicts this task's
+      // acceptance check needs to see in the audit trail). A same-payload
+      // retry (OT-5) produces zero changes here and stays silent, as before.
+      if (existingRow && (scalarChanges.length > 0 || elementChanges.length > 0)) {
+        await client.query(
+          `insert into audit_log (actor_user_id, jurisdiction_id, entity_type, entity_id, action, before_json, after_json)
+           values ($1, $2, 'assessment', $3, 'multi_device_merge', $4, $5)`,
+          [
+            userId,
+            jurisdictionId,
+            assessmentId,
+            JSON.stringify({ scalarFields: scalarChanges.map((c) => ({ field: c.field, value: c.before })) }),
+            JSON.stringify({
+              scalarFields: scalarChanges.map((c) => ({ field: c.field, value: c.after })),
+              elements: elementChanges.map((c) => ({ elementCode: c.elementCode, before: c.before, after: c.after })),
+              incomingDeviceCapturedAt: body.assessment.deviceCapturedAt,
+              incomingWasNewer: incomingIsNewer,
+            }),
+          ],
         );
       }
 
