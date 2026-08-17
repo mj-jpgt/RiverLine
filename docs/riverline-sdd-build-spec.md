@@ -180,7 +180,7 @@ Research-agent variant of the same problems: agents sent to gather ordinance cit
 
 The MVP is proven when the following end-to-end run works on a real iPhone, on a real Noblesville-area parcel, with you playing assessor and a colleague playing official:
 
-1. Assessor logs in, finds the structure by address, completes an 11-element assessment with photos in under 12 minutes, including 3 minutes with airplane mode on.
+1. Assessor logs in, finds the structure by address, completes an 11-element assessment with photos in under 12 minutes, including 3 minutes with airplane mode on. *(Correction 2026-08-17: "11-element" predates verification — the real SDE 3.0 residential structure is 12 elements; the timed run covers all 12. See docs/data-contracts/sde-cost-tables.md.)*
 2. The assessment syncs; the engine produces a calculation with visible cost-table version and value source.
 3. The official reviews, overrides one element with a reason, adopts the determination.
 4. A letter PDF generates with correct ordinance citation, appeal language, and ICC instructions, and prints legibly.
