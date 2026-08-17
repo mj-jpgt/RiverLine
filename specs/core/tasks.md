@@ -86,7 +86,7 @@ persisted; e2e review spec asserts grouped rendering; all existing gates green.
 ---
 # Add-ons (parallel after T-C5; one directory each)
 
-### T-A1 Letters  — src/modules/a1-letters/
+### [x] T-A1 Letters  — src/modules/a1-letters/
 Print-first PDF; refuses with explicit state when ordinance_citation is null.
 ### [x] T-A2 Dashboard — src/modules/a2-dashboard/
 Status counts, caseload list, CSV export. Map optional, last.

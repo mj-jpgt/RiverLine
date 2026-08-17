@@ -1,0 +1,300 @@
+/* A1 determination-letter page. Tokens only, institutional tone, matches
+   app/determination/page.module.css's structure. The refusal state
+   (.refusalPanel) is deliberately the most visually prominent state this
+   page can render — see docs/design/direction.md "Color and meaning": SD
+   uses the same danger-adjacent register, paired with a label, never color
+   alone. */
+
+.main {
+  min-height: 100dvh;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* --- State panels ------------------------------------------------------ */
+
+.statePanel {
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.statePanelText {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.errorPanel {
+  composes: statePanel;
+  border-color: var(--color-danger);
+}
+
+.errorPanel .statePanelText {
+  color: var(--color-danger);
+}
+
+/* --- Refusal state (THE headline feature) ------------------------------ */
+
+.refusalPanel {
+  composes: statePanel;
+  border: 2px solid var(--color-status-sd);
+  padding: var(--space-6) var(--space-5);
+}
+
+.refusalHeading {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-status-sd);
+}
+
+.inlineCode {
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+/* --- Ready / issued panel ----------------------------------------------- */
+
+.readyPanel {
+  composes: statePanel;
+}
+
+.previewFrameWrap {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.previewFrame {
+  width: 100%;
+  height: 70vh;
+  border: 0;
+  display: block;
+  background: var(--color-surface-raised);
+}
+
+.secondaryLink {
+  color: var(--color-action);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.secondaryLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Ordinance form (admin-only) ---------------------------------------- */
+
+.ordinanceForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.ordinanceFormHeading {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.formLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.ordinanceTextarea {
+  min-height: 8rem;
+  padding: var(--space-3);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  resize: vertical;
+}
+
+.ordinanceTextarea:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.numberInput {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  font-size: var(--text-base);
+  font-family: var(--font-data);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  max-width: 12rem;
+}
+
+.numberInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.fieldError {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.primaryButton:hover {
+  background: var(--color-action-hover);
+}
+
+.primaryButton:active {
+  background: var(--color-action-pressed);
+}
+
+.primaryButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.primaryButton:disabled {
+  background: var(--color-border);
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: var(--color-surface);
+}
+
+.secondaryButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.secondaryButton:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.actionsRow {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* --- Confirm panel (issue letter) --------------------------------------- */
+
+.confirmPanel {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.confirmHeading {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* --- Blocked / loading / not-found (mirrors app/determination) --------- */
+
+.blockedPanel {
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.blockedText {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: var(--space-4);
+  color: var(--color-action);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.backLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
