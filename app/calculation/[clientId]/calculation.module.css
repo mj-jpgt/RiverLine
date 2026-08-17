@@ -1,0 +1,337 @@
+.main {
+  min-height: 100dvh;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-action);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--color-action-hover);
+}
+
+.backLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-family: var(--font-data);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------
+   Result card — the ratio + threshold, the single most important
+   surface on this page. Status carried by label AND color (direction.md
+   "Color and meaning"): the badge always renders text, never a bare dot.
+   ------------------------------------------------------------------ */
+
+.resultCard {
+  margin-bottom: var(--space-5);
+  padding: var(--space-6) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.ratioValue {
+  margin: 0;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.ratioLabel {
+  margin: var(--space-2) 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: 700;
+  border: 2px solid currentColor;
+}
+
+.statusBadgeNotSd {
+  composes: statusBadge;
+  color: var(--color-status-not-sd);
+}
+
+.statusBadgeBorderline {
+  composes: statusBadge;
+  color: var(--color-status-borderline);
+}
+
+.statusBadgeSd {
+  composes: statusBadge;
+  color: var(--color-status-sd);
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.legalLine {
+  margin: var(--space-5) 0 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-surface);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.borderlineNote {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-status-borderline);
+  text-align: left;
+}
+
+/* ------------------------------------------------------------------
+   Input transparency card — every figure that fed the calculation,
+   visible per task requirement 3.
+   ------------------------------------------------------------------ */
+
+.card {
+  margin-bottom: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.cardHeading {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.dt {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.dd {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.ddMono {
+  composes: dd;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.sourceNote {
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-surface);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------
+   Per-element breakdown table. Dense tables are permitted outside the
+   field capture flow (direction.md "Layout") — this is the review /
+   calculation surface, not a capture screen.
+   ------------------------------------------------------------------ */
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-base);
+}
+
+.table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-surface);
+  color: var(--color-text);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.numCell {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.totalRow td {
+  font-weight: 700;
+  border-top: 2px solid var(--color-border);
+  border-bottom: none;
+}
+
+/* ------------------------------------------------------------------
+   Actions / empty / error / blocked states
+   ------------------------------------------------------------------ */
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.recomputeButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-action);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+}
+
+.recomputeButton:hover {
+  background: var(--color-surface);
+}
+
+.recomputeButton:active {
+  background: var(--color-action);
+  color: var(--color-surface-raised);
+}
+
+.recomputeButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.recomputeButton:disabled {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+.recomputeError {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.historyNote {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.statePanel {
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.blockedPanel {
+  composes: statePanel;
+  border-color: var(--color-status-borderline);
+  border-width: 2px;
+}
+
+.blockedHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.blockedText {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.blockedText:last-child {
+  margin-bottom: 0;
+}
+
+.blockedCode {
+  font-family: var(--font-data);
+  background: var(--color-surface);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.errorPanel {
+  composes: statePanel;
+  border-color: var(--color-danger);
+}
+
+.statePanelText {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-danger);
+  line-height: 1.5;
+}

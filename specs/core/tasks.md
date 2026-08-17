@@ -38,7 +38,7 @@ banner with queue count.
 with network disabled, then re-enables network and asserts sync. This flips
 the currently-failing gate to green.
 
-### T-C4 M3 50%-rule engine (pure TS)
+### [x] T-C4 M3 50%-rule engine (pure TS)
 **Module:** src/core/engine/
 **May read:** docs/data-contracts/sde-cost-tables.md, test/fixtures/engine/
 **Objective:** Deterministic pure functions: (structure, elements, cost_table)
@@ -57,6 +57,10 @@ screen, element/value override with mandatory reason (audited), explicit
 adopt action, supersede flow. Never auto-adopt.
 **Acceptance:** e2e spec: assessor completes capture → official overrides one
 element with reason → adopts → audit_log rows asserted via db query.
+**Added scope (from T-C3 open item):** per-field last-write-wins for genuinely
+concurrent multi-device edits of the same assessment, with an audit entry —
+spec §2.5. Single-device retry idempotency is already proven; this covers the
+two-device case (live-test OT-4).
 
 ### T-C6 Backup / restore proof (build spec §7.5, §10.6)
 **Module:** scripts/ops/

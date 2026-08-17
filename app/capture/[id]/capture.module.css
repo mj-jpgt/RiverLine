@@ -558,6 +558,13 @@
   color: var(--color-status-not-sd);
 }
 
+.completeActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
 /* ---------------------------------------------------------------------
    Loading / empty / error states
    --------------------------------------------------------------------- */

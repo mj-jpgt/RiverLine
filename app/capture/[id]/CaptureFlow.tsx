@@ -282,9 +282,28 @@ export function CaptureFlow({
                 ? "Saved on this device — syncing now."
                 : "Saved on this device. It will sync automatically once you're back online, or tap “Sync now” above."}
           </p>
-          <button type="button" className={styles.navButtonNext} onClick={() => router.push(`/registry/${structureId}`)}>
-            Back to structure
-          </button>
+          <div className={styles.completeActions}>
+            {draft.syncStatus === "synced" ? (
+              // The calculation trigger (M3/T-C4): once synced, the 50%-rule
+              // calculation can run. Visiting this link is the "on-demand"
+              // trigger path (task instructions #2) — the calculation page
+              // itself auto-computes on first view.
+              <button
+                type="button"
+                className={styles.navButtonNext}
+                onClick={() => router.push(`/calculation/${draft.clientId}`)}
+              >
+                View calculation
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={styles.navButtonBack}
+              onClick={() => router.push(`/registry/${structureId}`)}
+            >
+              Back to structure
+            </button>
+          </div>
         </div>
       ) : (
         <>
