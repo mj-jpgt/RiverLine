@@ -313,10 +313,19 @@ export async function POST(request: Request) {
       for (const photo of body.photos) {
         const storageKey = storageKeys.get(photo.id);
         if (!storageKey) continue;
+        // T-C7 (migrations/0004_photos_element_code.sql): persist which
+        // element this photo belongs to. Client-side, the required exterior
+        // shot is recorded with elementCode: null (src/core/capture/types.ts
+        // PhotoRecord doc comment: "null = the required exterior shot") — map
+        // that specific, known case to the literal 'exterior' element_code
+        // per task instructions, rather than leaving it null (null is
+        // reserved for genuinely unknown/legacy rows with no client-side
+        // association at all, e.g. anything synced before this migration).
+        const elementCode = photo.elementCode ?? "exterior";
         await client.query(
           `insert into photos (
-             id, assessment_id, jurisdiction_id, storage_key, sha256, captured_at, gps_lat, gps_lng
-           ) values ($1,$2,$3,$4,$5,$6,$7,$8)
+             id, assessment_id, jurisdiction_id, storage_key, sha256, captured_at, gps_lat, gps_lng, element_code
+           ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
            on conflict (id) do nothing`,
           [
             photo.id,
@@ -327,6 +336,7 @@ export async function POST(request: Request) {
             photo.capturedAt,
             photo.gpsLat,
             photo.gpsLng,
+            elementCode,
           ],
         );
       }

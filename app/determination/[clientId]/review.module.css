@@ -250,7 +250,24 @@
   border-bottom: none;
 }
 
-/* --- Photos (thumbnails, click to full) ---------------------------------- */
+/* --- Photos (thumbnails, click to full), grouped by element (T-C7) ------- */
+
+.photoGroup {
+  margin-bottom: var(--space-4);
+}
+
+.photoGroup:last-child {
+  margin-bottom: 0;
+}
+
+.photoGroupHeading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
 
 .photoGrid {
   display: flex;

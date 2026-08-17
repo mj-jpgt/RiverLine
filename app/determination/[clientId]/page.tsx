@@ -2,8 +2,9 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
-import { getReviewDetail, listAuditLogForAssessment } from "@/core/determination";
+import { getReviewDetail, listAuditLogForAssessment, groupPhotosByElement } from "@/core/determination";
 import type { ReviewDetail } from "@/core/determination";
+import { elementsForOccupancy } from "@/core/capture";
 import { OverrideElementControl } from "./_components/OverrideElementControl";
 import { OverrideValueControl } from "./_components/OverrideValueControl";
 import { AdoptAction } from "./_components/AdoptAction";
@@ -228,11 +229,16 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
 
       <section className={styles.card} aria-label="Photos">
         <h2 className={styles.cardHeading}>Photos</h2>
-        <p className={styles.sourceNote}>
-          Every photo captured during this assessment. (Per-element association is not recorded server-side — see
-          journal.)
-        </p>
-        <PhotoPanel photos={detail.photos} emptyLabel="No photos on file for this assessment — flagged, not hidden." />
+        {detail.photos.length === 0 ? (
+          <p className={styles.noPhotoNote}>No photos on file for this assessment — flagged, not hidden.</p>
+        ) : (
+          groupPhotosByElement(detail.photos, elementsForOccupancy(detail.occupancyType)).map((group) => (
+            <div key={group.code} className={styles.photoGroup}>
+              <h3 className={styles.photoGroupHeading}>{group.heading}</h3>
+              <PhotoPanel photos={group.photos} emptyLabel="No photos on file for this assessment — flagged, not hidden." />
+            </div>
+          ))
+        )}
       </section>
 
       <section className={styles.card} aria-label="Per-element breakdown">

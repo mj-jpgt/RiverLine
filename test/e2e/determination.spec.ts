@@ -175,6 +175,14 @@ test.describe("T-C5 M4 determination + adoption workflow — the LT-3 chain", ()
     await expect(page.getByText("Engine version")).toBeVisible();
     await expect(page.getByText("Foundations", { exact: true })).toBeVisible();
 
+    // T-C7: captureFullAssessment only attaches the required exterior photo
+    // (no per-element photos on this run), so the Photos section should
+    // render exactly one grouped heading — "Exterior" — proving the review
+    // screen actually groups by element_code rather than showing one flat
+    // gallery (migrations/0004_photos_element_code.sql,
+    // src/core/determination/pure.ts groupPhotosByElement).
+    await expect(page.getByRole("heading", { name: "Exterior", exact: true })).toBeVisible();
+
     await page.getByRole("button", { name: "Override Foundations" }).click();
     await page.getByLabel("New damage percentage (0-100)").fill("90");
     await page.getByRole("button", { name: "Save override" }).click();

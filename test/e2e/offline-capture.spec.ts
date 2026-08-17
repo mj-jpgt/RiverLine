@@ -538,7 +538,7 @@ test.describe("T-C3 offline-first field capture", () => {
     expect(elementsRow.rows[0].n).toBe(RESIDENTIAL_ELEMENT_COUNT);
 
     const photosRow = await admin.query(
-      "select sha256, storage_key from photos where assessment_id = $1 order by sha256",
+      "select sha256, storage_key, element_code from photos where assessment_id = $1 order by sha256",
       [assessmentId],
     );
     expect(photosRow.rows.length).toBeGreaterThanOrEqual(3); // 2 element photos + 1 exterior
@@ -546,6 +546,24 @@ test.describe("T-C3 offline-first field capture", () => {
       expect(row.sha256).toMatch(/^[0-9a-f]{64}$/);
       expect(row.storage_key).toBeTruthy();
     }
+
+    // T-C7 (migrations/0004_photos_element_code.sql): the sync endpoint
+    // persists element_code carried in the payload — the required exterior
+    // photo lands as the literal 'exterior' (not null; src/core/capture's
+    // client-side null only means "the exterior slot" and is mapped at
+    // app/api/capture/sync/route.ts), and each per-element photo (elements 1
+    // and 2, i.e. "foundations"/"superstructure" per elementsForOccupancy's
+    // order) lands with that real SDE element code — never null for a
+    // freshly-synced photo.
+    const exteriorPhotos = photosRow.rows.filter((r) => r.element_code === "exterior");
+    const elementPhotos = photosRow.rows.filter(
+      (r) => r.element_code !== null && r.element_code !== "exterior",
+    );
+    const nullPhotos = photosRow.rows.filter((r) => r.element_code === null);
+    expect(exteriorPhotos.length).toBe(1);
+    expect(elementPhotos.length).toBe(2);
+    expect(elementPhotos.map((r) => r.element_code).sort()).toEqual(["foundations", "superstructure"]);
+    expect(nullPhotos.length).toBe(0);
 
     // ---- 12. Idempotency probe (OT-5): resend the exact same payload -------------
     const resend = await readDraftFromIndexedDb(page, structureId);

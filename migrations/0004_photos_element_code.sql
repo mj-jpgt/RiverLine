@@ -1,0 +1,23 @@
+-- ============================================================================
+-- 0004_photos_element_code.sql
+-- T-C7 (specs/core/tasks.md): ADDITIVE migration, orchestrator-approved
+-- 2026-08-17 (see specs/core/tasks.md T-C7 header and
+-- docs/journal/2026-08-17-c5-determination.md "A real, load-bearing gap this
+-- task discovered" — T-C5 found photos have no server-side element
+-- association even though src/core/capture/types.ts's PhotoRecord.elementCode
+-- has always tracked it client-side, and it was silently dropped at sync).
+--
+-- schema/core.sql itself stays FROZEN and untouched (AGENTS.md rule 1) —
+-- this follows the exact precedent 0002/0003 already set (auth tables added
+-- outside core.sql). test/unit/db/migration-drift.test.ts only compares
+-- migration 0001 against schema/core.sql byte-for-byte, so this file does not
+-- touch that check.
+--
+-- Nullable, no backfill: existing photos rows have no recorded element
+-- association and none can be honestly inferred after the fact (AGENTS.md
+-- "never invent" / SUBAGENT.md — a plausible-looking guess is the worst
+-- outcome in this project). They render in the review screen's "Other
+-- photos" section, unchanged, forever, unless a human re-associates them.
+-- ============================================================================
+
+alter table photos add column element_code text;

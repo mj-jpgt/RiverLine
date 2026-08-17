@@ -11,7 +11,9 @@ export {
   readAppealWindowDays,
   canAdopt,
   canSupersede,
+  groupPhotosByElement,
 } from "./pure";
+export type { PhotoGroup } from "./pure";
 export type {
   DeterminationStatus,
   QueueStatusFilter,

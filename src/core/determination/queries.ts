@@ -173,11 +173,12 @@ export async function getReviewDetail(
       damage[row.element_code as string] = Number(row.damage_pct);
     }
 
-    // NOTE: schema/core.sql's photos table has no element_code column — see
-    // ReviewDetail.photos's doc comment in types.ts. Every photo for this
-    // assessment, undifferentiated.
+    // T-C7 (migrations/0004_photos_element_code.sql): element_code travels
+    // with every photo now; every photo for this assessment, still one flat
+    // list (grouping by element happens at the presentation layer — see
+    // app/determination/[clientId]/page.tsx).
     const photoRes = await client.query(
-      `select id, captured_at, gps_lat, gps_lng, caption
+      `select id, captured_at, gps_lat, gps_lng, caption, element_code
        from photos where assessment_id = $1 order by captured_at asc nulls last`,
       [assessmentId],
     );
@@ -187,6 +188,7 @@ export async function getReviewDetail(
       gpsLat: row.gps_lat === null ? null : Number(row.gps_lat),
       gpsLng: row.gps_lng === null ? null : Number(row.gps_lng),
       caption: (row.caption as string | null) ?? null,
+      elementCode: (row.element_code as string | null) ?? null,
     }));
 
     const elementDefs = elementsForOccupancy(occupancyType);

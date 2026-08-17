@@ -62,13 +62,26 @@ concurrent multi-device edits of the same assessment, with an audit entry —
 spec §2.5. Single-device retry idempotency is already proven; this covers the
 two-device case (live-test OT-4).
 
-### T-C6 Backup / restore proof (build spec §7.5, §10.6)
+### [x] T-C6 Backup / restore proof (build spec §7.5, §10.6)
 **Module:** scripts/ops/
 **Objective:** `pnpm db:backup` (pg_dump) and `pnpm db:restore <file>`;
 a test that backs up the dev db, restores into a scratch db, and asserts row
 counts + a sampled determination survive. Traceability gap flagged
 2026-08-17 by test-plan agent — no other task owned this.
 **Acceptance:** restore test green in `pnpm test:unit --run`; journal quotes it.
+
+### [x] T-C7 Per-element photo association (schema diff APPROVED)
+**Module:** migrations/, src/core/capture/ (sync payload), app/determination/ (gallery grouping), test/
+**Context:** T-C5 found photos have no server-side element association; T-C3
+captures it client-side and drops it at sync. Orchestrator decision 2026-08-17:
+approved as ADDITIVE migration 0004 adding `photos.element_code text null`
+(pattern precedent: 0002/0003 auth tables). `schema/core.sql` itself stays
+untouched; the 0001-drift test must keep passing.
+**Objective:** carry element_code through sync into photos; review screen
+groups photos by element with "Exterior" + ungrouped sections; old rows (null)
+render in a general section — no backfill guessing.
+**Acceptance:** migration applies; sync integration test asserts element_code
+persisted; e2e review spec asserts grouped rendering; all existing gates green.
 
 ---
 # Add-ons (parallel after T-C5; one directory each)
