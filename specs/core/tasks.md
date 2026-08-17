@@ -2,7 +2,7 @@
 
 Status legend: [ ] open · [~] in progress · [x] done (verify command quoted in journal)
 
-### T-C1 Database + M0 auth foundation
+### [x] T-C1 Database + M0 auth foundation
 **Module:** migrations/, src/core/auth/, src/shared/db/
 **May read:** schema/core.sql, docs/adr/*, specs/constitution.md
 **Objective:** Real Postgres schema live via migrations; magic-link auth with
@@ -14,7 +14,9 @@ role guard helpers, seed script for a demo jurisdiction ("Demo City" +
 is a real row, clearly named, not a mock).
 **Acceptance:** `pnpm db:migrate && pnpm test:unit --run` green including a
 cross-tenant test that INSERTs two jurisdictions and proves tenant A cannot
-read tenant B via the app db client; `pnpm test:e2e` login spec passes.
+read tenant B via the app db client; immutability probes (UPDATE/DELETE on
+calculations raises; DELETE on determinations raises; determination UPDATE
+writes audit_log) — AGENTS.md rules 10/11; `pnpm test:e2e` login spec passes.
 
 ### T-C2 M1 structure registry + real parcel ingest
 **Module:** scripts/preprocess/, src/core/registry/
@@ -55,6 +57,14 @@ screen, element/value override with mandatory reason (audited), explicit
 adopt action, supersede flow. Never auto-adopt.
 **Acceptance:** e2e spec: assessor completes capture → official overrides one
 element with reason → adopts → audit_log rows asserted via db query.
+
+### T-C6 Backup / restore proof (build spec §7.5, §10.6)
+**Module:** scripts/ops/
+**Objective:** `pnpm db:backup` (pg_dump) and `pnpm db:restore <file>`;
+a test that backs up the dev db, restores into a scratch db, and asserts row
+counts + a sampled determination survive. Traceability gap flagged
+2026-08-17 by test-plan agent — no other task owned this.
+**Acceptance:** restore test green in `pnpm test:unit --run`; journal quotes it.
 
 ---
 # Add-ons (parallel after T-C5; one directory each)

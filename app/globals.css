@@ -1,8 +1,17 @@
 @import "tailwindcss";
+@import "../docs/design/tokens.css";
 
 /*
- * Design tokens belong in docs/design/tokens.css (owned by the design/UI
- * agents — this toolchain task does not touch docs/design/). Once that file
- * exists it should be @import-ed here as the only source of color, spacing,
- * radius, and type, per AGENTS.md "UI" section.
+ * docs/design/tokens.css is the only source of color, spacing, radius, and
+ * type (AGENTS.md "UI" section) — components reference the semantic
+ * `var(--color-*)` / `var(--space-*)` / etc. names it defines, never raw
+ * hex or Tailwind arbitrary values.
  */
+
+body {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  margin: 0;
+}

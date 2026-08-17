@@ -1,0 +1,126 @@
+.main {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.card {
+  width: 100%;
+  max-width: 28rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.subhead {
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.label {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.input {
+  min-height: var(--tap-min);
+  font-size: var(--text-lg);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.input:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.input:disabled {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.inputError {
+  border-color: var(--color-danger);
+}
+
+.errorText {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.statusText {
+  font-size: var(--text-sm);
+  color: var(--color-status-not-sd);
+  font-weight: 600;
+}
+
+.submit {
+  width: 100%;
+  min-height: var(--tap-min);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  /* --color-surface-raised is USWDS pure white — reused here as the
+     label color on the action fill; contrast against all three action
+     tones (6.72-13.60:1) is documented in tokens.css. */
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: none;
+  border-radius: var(--radius-md);
+  transition: background-color 120ms ease-out;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--color-action-hover);
+}
+
+.submit:active:not(:disabled) {
+  background: var(--color-action-pressed);
+}
+
+.submit:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.submit:disabled {
+  background: var(--color-status-draft);
+  cursor: not-allowed;
+}
+
+.helpText {
+  margin-top: var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

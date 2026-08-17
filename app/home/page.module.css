@@ -1,0 +1,83 @@
+.main {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.card {
+  width: 100%;
+  max-width: 28rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-status-not-sd);
+}
+
+.heading {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin: 0 0 var(--space-6);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.meta div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.meta dt {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.meta dd {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.mono {
+  font-family: var(--font-data);
+  font-size: var(--text-sm) !important;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.logoutButton {
+  width: 100%;
+  min-height: var(--tap-min);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.logoutButton:hover {
+  background: var(--color-surface);
+}
+
+.logoutButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

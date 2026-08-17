@@ -73,6 +73,28 @@ Record the answer in `docs/data-contracts/hamilton-county-parcels.md` under
 
 ---
 
+## B4 — Choose a transactional email provider for magic-link delivery (blocks production M0 auth)
+
+**Why it is blocked:** `src/core/auth/magic-link.ts` implements the full
+allowlist → single-use-token → verify flow, and in dev the link is logged
+server-side and served from a dev-only route
+(`app/api/dev/magic-link/route.ts`) — see
+`docs/journal/2026-08-17-c1-auth-db.md`. There is no email transport wired
+for `NODE_ENV === 'production'`: sending real mail needs a chosen provider
+(e.g. an SMTP relay, SES, Postmark, Resend), credentials, and — per
+AGENTS.md rule 3 — an ADR before adding any new dependency for it. Rather
+than fabricate a fake send or silently no-op, `requestMagicLink()` throws a
+clear, loud error in production until this is resolved, the same pattern
+the constitution uses for the ordinance-citation and cost-table gaps.
+
+**Steps:**
+1. Pick a provider (ask whoever owns the jurisdiction's IT/email policy —
+   a `.gov` domain may have constraints on third-party mail relays).
+2. Write an ADR recording the choice and the new dependency.
+3. Implement the production branch of `requestMagicLink()` against it.
+
+---
+
 ## Contact-verification warning
 
 `docs/data-contracts/contacts.md` documents a case where a web search summary
