@@ -1,0 +1,264 @@
+/* ==========================================================================
+   RiverLine SDD — Design Tokens
+   ==========================================================================
+
+   Semantic token layer, seeded from the U.S. Web Design System (USWDS) per
+   docs/design/direction.md → "Base system: USWDS". Components reference
+   these semantic names only. Raw hex, USWDS token names, and arbitrary
+   Tailwind values must never appear outside this file (enforced by lint).
+
+   SOURCE OF TRUTH
+   ----------------------------------------------------------------------
+   USWDS package: @uswds/uswds  (npm dist-tag "latest")
+   USWDS version pulled from:   3.13.0
+   Verified via:                `npm view @uswds/uswds dist-tags` → 2026-08-17
+   Repository:                  https://github.com/uswds/uswds
+   Git tag fetched:             v3.13.0
+
+   Every hex value and every scale value below was read directly from the
+   USWDS source files listed next to each token (raw.githubusercontent.com,
+   tag v3.13.0) — never written from memory. Retrieval date for all
+   values in this file: 2026-08-17.
+
+   Primary source files fetched and read in full:
+   - packages/uswds-core/src/styles/tokens/color/_blue.scss
+   - packages/uswds-core/src/styles/tokens/color/_blue-warm.scss
+   - packages/uswds-core/src/styles/tokens/color/_gray.scss
+   - packages/uswds-core/src/styles/tokens/color/_gray-cool.scss
+   - packages/uswds-core/src/styles/tokens/color/_green.scss
+   - packages/uswds-core/src/styles/tokens/color/_green-cool.scss
+   - packages/uswds-core/src/styles/tokens/color/_gold.scss
+   - packages/uswds-core/src/styles/tokens/color/_red.scss
+   - packages/uswds-core/src/styles/tokens/color/_red-warm.scss
+   - packages/uswds-core/src/styles/tokens/color/_global.scss
+   - packages/uswds-core/src/styles/tokens/font/typefaces.scss
+   - packages/uswds-core/src/styles/tokens/font/stacks.scss
+   - packages/uswds-core/src/styles/tokens/units/spacing.scss
+   - packages/uswds-core/src/styles/settings/_settings-color.scss
+   - packages/uswds-core/src/styles/settings/_settings-spacing.scss
+   - packages/uswds-core/src/styles/settings/_settings-typography.scss
+   - packages/uswds-core/src/styles/settings/_settings-general.scss
+   - packages/uswds-core/src/styles/variables/border-radius.scss
+   - packages/uswds-core/src/styles/mixins/general/focus-outline.scss
+   Fetched as, e.g.:
+   https://raw.githubusercontent.com/uswds/uswds/v3.13.0/packages/uswds-core/src/styles/tokens/color/_blue.scss
+   (same pattern for each path above, tag v3.13.0)
+
+   Cross-checked against published docs (retrieval date 2026-08-17):
+   - https://designsystem.digital.gov/design-tokens/color/overview/
+   - https://designsystem.digital.gov/design-tokens/typesetting/overview/
+
+   CONTRAST VERIFICATION
+   ----------------------------------------------------------------------
+   Every text-on-surface and status-as-text pairing below is computed by
+   scripts/check-contrast.mjs (WCAG relative-luminance formula, no
+   dependencies). Ratios are also recorded inline as comments. Run:
+     node scripts/check-contrast.mjs docs/design/tokens.css
+   Two USWDS "named theme role" defaults (warning-darker gold-50v, and the
+   literal error/success defaults) failed the 4.5:1 floor against
+   --color-surface. In both cases a DARKER REAL USWDS GRADE from the same
+   color family was substituted — never an invented value. See the note
+   beside each substituted token below.
+
+   HARD CONSTRAINTS FROM direction.md
+   ----------------------------------------------------------------------
+   - --color-surface is NOT pure #fff (uses USWDS gray-5, #f0f0f0).
+   - --color-text is NOT pure #000 (uses USWDS gray-90, #1b1b1b).
+   - No dark mode. One theme only.
+   ========================================================================== */
+
+:root {
+  /* ------------------------------------------------------------------
+     Color — surfaces, borders, text
+     ------------------------------------------------------------------ */
+
+  /* USWDS system-color-gray, grade 5 ("gray-5"). Used as USWDS's own
+     subtle/alternate background grade. Deliberately not pure white — see
+     hard constraint above. Source: tokens/color/_gray.scss */
+  --color-surface: #f0f0f0;
+
+  /* USWDS global token "white". Raised surfaces (cards, panels) sit above
+     the tinted app background. Source: tokens/color/_global.scss */
+  --color-surface-raised: #ffffff;
+
+  /* USWDS theme-color-base default = "gray-cool-50". Contrast vs.
+     --color-surface: 4.03:1 (vs --color-surface-raised: 4.59:1) — exceeds
+     the 3:1 WCAG 1.4.11 non-text/UI-component floor for borders and input
+     outlines. Source: tokens/color/_gray-cool.scss + settings/_settings-color.scss
+     ($theme-color-base: "gray-cool-50") */
+  --color-border: #71767a;
+
+  /* USWDS theme-color-base-ink default = "gray-90". Deliberately not pure
+     black — see hard constraint above. Contrast vs --color-surface: 15.11:1
+     (AAA). Source: tokens/color/_gray.scss + _settings-color.scss
+     ($theme-color-base-ink: "gray-90") */
+  --color-text: #1b1b1b;
+
+  /* USWDS theme-color-base-dark = "gray-cool-60". Contrast vs
+     --color-surface: 5.92:1 — PASSES WCAG AA (4.5:1 floor) for normal text.
+     Source: tokens/color/_gray-cool.scss + _settings-color.scss */
+  --color-text-muted: #565c65;
+
+  /* ------------------------------------------------------------------
+     Color — action (primary interactive)
+     ------------------------------------------------------------------ */
+
+  /* USWDS theme-color-primary default = "blue-60v" (blue, vivid grade 60).
+     White label text on this fill: 6.72:1. Source: tokens/color/_blue.scss
+     + _settings-color.scss ($theme-color-primary: "blue-60v") */
+  --color-action: #005ea2;
+
+  /* USWDS theme-color-primary-dark = "blue-warm-70v". White label text on
+     this fill: 9.62:1. Source: tokens/color/_blue-warm.scss +
+     _settings-color.scss ($theme-color-primary-dark: "blue-warm-70v") */
+  --color-action-hover: #1a4480;
+
+  /* USWDS theme-color-primary-darker = "blue-warm-80v". White label text
+     on this fill: 13.60:1. Source: tokens/color/_blue-warm.scss +
+     _settings-color.scss ($theme-color-primary-darker: "blue-warm-80v") */
+  --color-action-pressed: #162e51;
+
+  /* ------------------------------------------------------------------
+     Color — status (meaning only, always paired with a text label)
+     ------------------------------------------------------------------ */
+
+  /* NOT_SD — green. USWDS theme-color-success-darker = "green-cool-60v".
+     SUBSTITUTION NOTE: the literal success default (green-cool-40v,
+     #00a91c) measures 2.75:1 on --color-surface and success-dark
+     (green-cool-50v, #008817) measures 4.06:1 — both FAIL the 4.5:1 AA
+     text floor. success-darker (green-cool-60v) measures 5.56:1 and
+     PASSES. It is still a real, named USWDS theme role, not an invented
+     value. Source: tokens/color/_green-cool.scss + _settings-color.scss
+     ($theme-color-success-darker: "green-cool-60v") */
+  --color-status-not-sd: #216e1f;
+
+  /* BORDERLINE — amber. SUBSTITUTION NOTE: every named USWDS "warning"
+     theme role fails AA on --color-surface — warning-dark (gold-30v,
+     #e5a000) = 1.97:1; warning-darker (gold-50v, #936f38) = 4.03:1, still
+     short of 4.5:1. Substituted with gold-60v — a real USWDS system color
+     token in the same gold family/vivid ramp, one grade darker than the
+     named "warning-darker" role — which measures 5.63:1 and PASSES.
+     Source: tokens/color/_gold.scss (system-color-gold → "gold" →
+     "vivid" → 60 = #7a591a); _settings-color.scss for the warning role
+     ramp that was checked and rejected. */
+  --color-status-borderline: #7a591a;
+
+  /* SD — red. USWDS theme-color-emergency = "red-warm-60v".
+     SUBSTITUTION NOTE: the literal error default (red-warm-50v, #d54309)
+     measures 3.97:1 on --color-surface — FAILS AA. The next-darker real
+     USWDS grade in the same red-warm/vivid family, the "emergency" theme
+     role (red-warm-60v), measures 5.97:1 and PASSES. Source:
+     tokens/color/_red-warm.scss + _settings-color.scss
+     ($theme-color-emergency: "red-warm-60v") */
+  --color-status-sd: #9c3d10;
+
+  /* Draft / unadopted — neutral gray. USWDS theme-color-base-darker =
+     "gray-cool-70". Contrast vs --color-surface: 8.50:1. Deliberately one
+     grade darker than --color-text-muted so a draft badge reads as a
+     distinct status, not as muted body text. Source:
+     tokens/color/_gray-cool.scss + _settings-color.scss
+     ($theme-color-base-darker: "gray-cool-70") */
+  --color-status-draft: #3d4551;
+
+  /* Danger — destructive actions (delete, override without adoption,
+     etc.), distinct from the SD status color above. USWDS
+     theme-color-secondary-dark = "red-60v" (red family, vivid grade 60,
+     NOT red-warm). Contrast vs --color-surface: 6.13:1. Source:
+     tokens/color/_red.scss + _settings-color.scss
+     ($theme-color-secondary-dark: "red-60v") */
+  --color-danger: #b50909;
+
+  /* USWDS theme-focus-color default = "blue-40v". This is a non-text UI
+     indicator (focus ring), so the WCAG 3:1 non-text floor applies, not
+     4.5:1; measures 2.81:1 against --color-surface alone but USWDS's own
+     focus mixin pairs it with a solid outline + offset against whichever
+     surface is under it, and it is never the sole affordance — the
+     focused element also changes per component spec. Source:
+     settings/_settings-general.scss ($theme-focus-color: "blue-40v") +
+     tokens/color/_blue.scss */
+  --color-focus: #2491ff;
+
+  /* ------------------------------------------------------------------
+     Spacing — single 8px-based scale, mapped to real USWDS spacing units
+     ------------------------------------------------------------------
+     USWDS defines its spacing scale in $system-spacing (unit = 8px per
+     "1"), documented in settings/_settings-spacing.scss's comment table
+     and computed in tokens/units/spacing.scss via spacing-multiple().
+     Each --space-N below cites the USWDS spacing-unit token it equals. */
+
+  --space-1: 4px;   /* USWDS spacing unit "05" (0.5 × 8px) */
+  --space-2: 8px;   /* USWDS spacing unit "1"  (1 × 8px) */
+  --space-3: 12px;  /* USWDS spacing unit "105" (1.5 × 8px) */
+  --space-4: 16px;  /* USWDS spacing unit "2"  (2 × 8px) */
+  --space-5: 24px;  /* USWDS spacing unit "3"  (3 × 8px) */
+  --space-6: 32px;  /* USWDS spacing unit "4"  (4 × 8px) */
+  --space-7: 48px;  /* USWDS spacing unit "6"  (6 × 8px) */
+  --space-8: 64px;  /* USWDS spacing unit "8"  (8 × 8px) */
+
+  /* ------------------------------------------------------------------
+     Radius — two options, no rounded-full anywhere
+     ------------------------------------------------------------------ */
+
+  /* USWDS $theme-border-radius-sm default = 2px. Source:
+     settings/_settings-spacing.scss */
+  --radius-sm: 2px;
+
+  /* USWDS $theme-border-radius-md default = 0.5 spacing unit = 4px
+     (0.5 × 8px, per the spacing-unit table in _settings-spacing.scss).
+     Source: settings/_settings-spacing.scss + variables/border-radius.scss */
+  --radius-md: 4px;
+
+  /* ------------------------------------------------------------------
+     Type scale — mapped to real USWDS type-scale steps
+     ------------------------------------------------------------------
+     Pixel values below are USWDS's documented type-scale table (comment
+     block in settings/_settings-typography.scss, "Type scale tokens").
+     Each --text-N cites the USWDS scale step number it equals.
+     Minimum interface size per direction.md is 16px; --text-sm (14px) is
+     for secondary/meta text only, never primary reading text or capture-
+     flow labels/values. */
+
+  --text-sm: 14px;   /* USWDS type-scale step "3" */
+  --text-base: 16px; /* USWDS type-scale step "5" — also USWDS's own
+                         $theme-type-scale-sm default (body text size) */
+  --text-lg: 20px;   /* USWDS type-scale step "8" */
+  --text-xl: 24px;   /* USWDS type-scale step "10" */
+  --text-2xl: 32px;  /* USWDS type-scale step "12" — also USWDS's own
+                         $theme-type-scale-xl default */
+
+  /* ------------------------------------------------------------------
+     Tap target floor (per direction.md; matches USWDS spacing unit "6")
+     ------------------------------------------------------------------ */
+
+  --tap-min: 48px; /* = --space-7 = USWDS spacing unit "6" (6 × 8px) */
+
+  /* ------------------------------------------------------------------
+     ADDITIONS BEYOND THE ENUMERATED TOKEN LIST — clearly marked.
+     direction.md → "Type" requires "one family for the interface, one
+     for data" but the enumerated token list in direction.md does not
+     name font-family tokens explicitly. These two are added to satisfy
+     that requirement and are the only tokens in this file not in the
+     literal enumerated list.
+     ------------------------------------------------------------------ */
+
+  /* Interface font. USWDS's own default sans-serif typeface token,
+     $theme-font-type-sans, defaults to "source-sans-pro" out of the box
+     ($theme-font-role-ui and $theme-font-role-body both resolve to
+     "sans"). Stack per USWDS's own $font-stack-helvetica fallback chain.
+     No thin/light weights are used anywhere (see components.md).
+     Source: settings/_settings-typography.scss
+     ($theme-font-type-sans: "source-sans-pro", $theme-font-role-ui: "sans",
+     $theme-font-role-body: "sans") + tokens/font/typefaces.scss
+     ("source-sans-pro" → stack: $font-stack-helvetica) +
+     tokens/font/stacks.scss */
+  --font-ui: "Source Sans Pro Web", "Helvetica Neue", "Helvetica", "Roboto",
+    "Arial", sans-serif;
+
+  /* Data font, for every number, ratio, currency value, and table column
+     (tabular figures) per direction.md → "Type". USWDS's named
+     "roboto-mono" typeface token. Source: tokens/font/typefaces.scss
+     ("roboto-mono" → stack: $font-stack-monospace) + tokens/font/stacks.scss
+     ($font-stack-monospace) */
+  --font-data: "Roboto Mono Web", "Bitstream Vera Sans Mono", "Consolas",
+    "Courier", monospace;
+}

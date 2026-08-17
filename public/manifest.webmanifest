@@ -1,0 +1,10 @@
+{
+  "name": "RiverLine SDD",
+  "short_name": "RiverLine",
+  "description": "Field tool for local floodplain officials to record flood damage and compute the FEMA 50% substantial-damage ratio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1b2b",
+  "theme_color": "#0b1b2b",
+  "icons": []
+}

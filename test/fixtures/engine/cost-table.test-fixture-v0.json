@@ -1,0 +1,30 @@
+{
+  "version": "TEST-FIXTURE-v0",
+  "source_citation": "TEST-FIXTURE — arbitrary values for math verification only. Not FEMA data. Never load outside *_test databases.",
+  "effective_date": "2026-08-17",
+  "base_cost_per_sqft": {
+    "residential": {
+      "foundations": 10,
+      "superstructure": 20,
+      "roof_covering": 8,
+      "exterior_finish": 6,
+      "interior_finish": 12,
+      "doors_windows": 7,
+      "cabinets_countertops": 5,
+      "floor_finish": 9,
+      "plumbing": 11,
+      "electrical": 10,
+      "appliances": 4,
+      "hvac": 8
+    },
+    "non_residential": {
+      "foundations": 12,
+      "superstructure": 25,
+      "roof_covering": 9,
+      "plumbing": 10,
+      "electrical": 11,
+      "interiors": 14,
+      "hvac": 9
+    }
+  }
+}

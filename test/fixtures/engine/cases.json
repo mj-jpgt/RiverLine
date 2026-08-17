@@ -1,0 +1,92 @@
+{
+  "cost_table_version": "TEST-FIXTURE-v0",
+  "cases": [
+    {
+      "id": "G1-zero-damage",
+      "occupancy": "residential",
+      "sq_ft": 1000,
+      "market_value_used": 200000,
+      "damage": {},
+      "expected": { "total_repair_cost": 0, "ratio": 0.0, "threshold_result": "NOT_SD" },
+      "working": "no damaged elements -> 0 / 200000 = 0"
+    },
+    {
+      "id": "G2-total-loss-res",
+      "occupancy": "residential",
+      "sq_ft": 1000,
+      "market_value_used": 200000,
+      "damage": { "foundations": 100, "superstructure": 100, "roof_covering": 100, "exterior_finish": 100, "interior_finish": 100, "doors_windows": 100, "cabinets_countertops": 100, "floor_finish": 100, "plumbing": 100, "electrical": 100, "appliances": 100, "hvac": 100 },
+      "expected": { "total_repair_cost": 110000, "ratio": 0.55, "threshold_result": "SD" },
+      "working": "sum(base)=110 $/sqft x 1000 x 100% = 110000; 110000/200000 = 0.55; 0.55 >= 0.55 -> SD (upper boundary inclusive)"
+    },
+    {
+      "id": "G3-partial-not-sd",
+      "occupancy": "residential",
+      "sq_ft": 1000,
+      "market_value_used": 100000,
+      "damage": { "foundations": 25, "superstructure": 50, "roof_covering": 100, "interior_finish": 75, "floor_finish": 50, "plumbing": 25, "electrical": 25 },
+      "expected": { "total_repair_cost": 39250, "ratio": 0.3925, "threshold_result": "NOT_SD" },
+      "working": "2500+10000+8000+9000+4500+2750+2500 = 39250; /100000 = 0.3925 < 0.45"
+    },
+    {
+      "id": "G4-borderline-mid",
+      "occupancy": "residential",
+      "sq_ft": 1000,
+      "market_value_used": 80000,
+      "damage": { "foundations": 25, "superstructure": 50, "roof_covering": 100, "interior_finish": 75, "floor_finish": 50, "plumbing": 25, "electrical": 25 },
+      "expected": { "total_repair_cost": 39250, "ratio": 0.4906, "threshold_result": "BORDERLINE" },
+      "working": "39250/80000 = 0.490625 -> 4dp half-up 0.4906; 0.45 <= r < 0.55"
+    },
+    {
+      "id": "G5-nonres-borderline",
+      "occupancy": "non_residential",
+      "sq_ft": 2000,
+      "market_value_used": 140000,
+      "damage": { "superstructure": 50, "interiors": 100, "electrical": 50 },
+      "expected": { "total_repair_cost": 64000, "ratio": 0.4571, "threshold_result": "BORDERLINE" },
+      "working": "25*2000*0.5=25000; 14*2000*1.0=28000; 11*2000*0.5=11000; total 64000; /140000 = 0.457142... -> 0.4571"
+    },
+    {
+      "id": "G6-lower-boundary-exact-45",
+      "occupancy": "residential",
+      "sq_ft": 1000,
+      "market_value_used": 100000,
+      "damage": { "foundations": 100, "superstructure": 100, "roof_covering": 100, "doors_windows": 100 },
+      "expected": { "total_repair_cost": 45000, "ratio": 0.45, "threshold_result": "BORDERLINE" },
+      "working": "10000+20000+8000+7000 = 45000; /100000 = 0.45 exactly -> BORDERLINE (lower boundary inclusive)"
+    },
+    {
+      "id": "G7-upper-boundary-exact-55-via-half-damage",
+      "occupancy": "residential",
+      "sq_ft": 1000,
+      "market_value_used": 100000,
+      "damage": { "foundations": 50, "superstructure": 50, "roof_covering": 50, "exterior_finish": 50, "interior_finish": 50, "doors_windows": 50, "cabinets_countertops": 50, "floor_finish": 50, "plumbing": 50, "electrical": 50, "appliances": 50, "hvac": 50 },
+      "expected": { "total_repair_cost": 55000, "ratio": 0.55, "threshold_result": "SD" },
+      "working": "110 $/sqft x 1000 x 50% = 55000; /100000 = 0.55 -> SD"
+    },
+    {
+      "id": "E1-invalid-market-value-zero",
+      "occupancy": "residential",
+      "sq_ft": 1000,
+      "market_value_used": 0,
+      "damage": { "roof_covering": 100 },
+      "expected_error": "market_value_used must be > 0"
+    },
+    {
+      "id": "E2-unknown-element-code",
+      "occupancy": "residential",
+      "sq_ft": 1000,
+      "market_value_used": 100000,
+      "damage": { "chimney": 50 },
+      "expected_error": "unknown element code for occupancy"
+    },
+    {
+      "id": "E3-wrong-occupancy-element",
+      "occupancy": "non_residential",
+      "sq_ft": 1000,
+      "market_value_used": 100000,
+      "damage": { "cabinets_countertops": 50 },
+      "expected_error": "unknown element code for occupancy"
+    }
+  ]
+}

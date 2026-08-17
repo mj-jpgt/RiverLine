@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.env*
+!.env.example
+data/raw/
+*.log
+.DS_Store
+playwright-report/
+test-results/
+public/sw.js
+public/sw.js.map
+public/swe-worker*.js
+public/swe-worker*.js.map
+*.tsbuildinfo
+.pnpm-store/

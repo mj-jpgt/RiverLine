@@ -1,0 +1,53 @@
+{
+  "name": "riverline-sdd",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test:unit": "vitest",
+    "test:e2e": "playwright test",
+    "test:offline": "node scripts/test-offline.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node scripts/db/migrate.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "next": "15.5.23",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "@supabase/supabase-js": "2.112.3",
+    "zod": "4.4.3",
+    "serwist": "9.5.12",
+    "idb": "8.0.3",
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "@types/node": "26.2.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@types/pg": "8.21.0",
+    "eslint": "9.39.5",
+    "@eslint/js": "9.39.5",
+    "@eslint/eslintrc": "3.3.6",
+    "eslint-config-next": "15.5.23",
+    "typescript-eslint": "8.67.0",
+    "eslint-plugin-boundaries": "7.2.0",
+    "@serwist/next": "9.5.12",
+    "vitest": "4.1.10",
+    "@vitejs/plugin-react": "6.0.5",
+    "jsdom": "30.0.1",
+    "@playwright/test": "1.62.1",
+    "tailwindcss": "4.3.3",
+    "@tailwindcss/postcss": "4.3.3",
+    "postcss": "8.5.26"
+  }
+}

@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens belong in docs/design/tokens.css (owned by the design/UI
+ * agents — this toolchain task does not touch docs/design/). Once that file
+ * exists it should be @import-ed here as the only source of color, spacing,
+ * radius, and type, per AGENTS.md "UI" section.
+ */

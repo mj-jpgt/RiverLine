@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: riverline
+      POSTGRES_PASSWORD: riverline
+      POSTGRES_DB: riverline_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - riverline_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U riverline -d riverline_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  riverline_pg_data:
