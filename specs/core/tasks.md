@@ -28,7 +28,7 @@ address, nearest-by-GPS list. No map dependency.
 **Acceptance:** script run against live services ingests real parcels
 (journal quotes row count); e2e spec finds a real address and opens it.
 
-### T-C3 M2 field capture, offline-first
+### [x] T-C3 M2 field capture, offline-first
 **Module:** src/core/capture/, src/sw/ (service worker)
 **May read:** docs/design/* (mandatory), docs/adr/0002
 **Objective:** Element-by-element capture flow (12 res / 7 non-res), photo

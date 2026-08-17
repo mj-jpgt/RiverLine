@@ -74,7 +74,9 @@ test.describe("M1 structure registry", () => {
     await expect(startAssessment).toBeVisible();
     await startAssessment.click();
     await expect(page).toHaveURL(/\/capture\/[0-9a-f-]+$/);
-    await expect(page.getByText(/being built next/i)).toBeVisible();
+    // T-C3 replaced the T-C2 placeholder with the real capture flow — the
+    // first screen is "Confirm structure" (attributes), not stub copy.
+    await expect(page.getByText("Confirm structure")).toBeVisible();
   });
 
   test("no-match search shows a designed empty state, not a blank area", async ({ page, request, baseURL }) => {

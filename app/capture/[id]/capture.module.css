@@ -1,0 +1,583 @@
+/* Shared styles for the M2 field capture flow. Tokens only
+   (docs/design/tokens.css) — no raw hex, no arbitrary values, no sliders,
+   no rounded-full. One decision per screen, ≥48px tap targets with ≥8px
+   gaps, directional transitions under 150ms gated by prefers-reduced-motion
+   (docs/design/direction.md "Smooth, not decorative"). */
+
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+}
+
+/* ---------------------------------------------------------------------
+   Offline / sync banner — persistent, never a toast (AGENTS.md rule 7,
+   components.md "Offline banner" row).
+   --------------------------------------------------------------------- */
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bannerOffline {
+  composes: banner;
+  background: var(--color-status-draft);
+  color: var(--color-surface-raised);
+}
+
+.bannerSyncing {
+  composes: banner;
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+}
+
+.bannerError {
+  composes: banner;
+  background: var(--color-danger);
+  color: var(--color-surface-raised);
+}
+
+.bannerSynced {
+  composes: banner;
+  background: var(--color-status-not-sd);
+  color: var(--color-surface-raised);
+}
+
+.bannerText {
+  margin: 0;
+}
+
+.syncNowButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: inherit;
+  background: transparent;
+  border: 2px solid currentColor;
+  border-radius: var(--radius-md);
+}
+
+.syncNowButton:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.syncNowButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Progress
+   --------------------------------------------------------------------- */
+.progressWrap {
+  padding: var(--space-4) var(--space-5) 0;
+}
+
+.progressLabel {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressTrack {
+  display: flex;
+  gap: 2px;
+  height: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.progressSegment {
+  flex: 1;
+  height: 100%;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: background-color 140ms ease-out;
+}
+
+.progressSegmentDone {
+  composes: progressSegment;
+  background: var(--color-action);
+  border-color: var(--color-action);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressSegment,
+  .progressSegmentDone {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Screen container + directional transition
+   --------------------------------------------------------------------- */
+.screenViewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.screen {
+  padding: var(--space-5) var(--space-5) var(--space-8);
+  max-width: 40rem;
+  margin: 0 auto;
+  min-height: 100%;
+}
+
+.screenEnterForward {
+  animation: slideInForward 140ms ease-out;
+}
+
+.screenEnterBack {
+  animation: slideInBack 140ms ease-out;
+}
+
+@keyframes slideInForward {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInBack {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screenEnterForward,
+  .screenEnterBack {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Typography
+   --------------------------------------------------------------------- */
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-family: var(--font-data);
+}
+
+.heading {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.subheading {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.fieldGroup {
+  margin-bottom: var(--space-6);
+}
+
+.fieldLabel {
+  display: block;
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.fieldHint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------------
+   Button groups (occupancy, foundation, stories, damage %, water source)
+   — large presets, never a dropdown, never a slider.
+   --------------------------------------------------------------------- */
+.buttonGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.buttonGridWide {
+  composes: buttonGrid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.optionButton {
+  min-height: var(--tap-min);
+  padding: var(--space-3) var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-action);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.optionButton:active {
+  background: var(--color-action-pressed);
+  color: var(--color-surface-raised);
+  border-color: var(--color-action-pressed);
+}
+
+.optionButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.optionButtonSelected {
+  composes: optionButton;
+  background: var(--color-action);
+  color: var(--color-surface-raised);
+  border-color: var(--color-action);
+}
+
+.optionButtonSelected:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
+}
+
+/* ---------------------------------------------------------------------
+   Free-entry numeric input (damage %, sq ft, water depth) — a separate,
+   clearly distinct control from the preset buttons, never the only option.
+   --------------------------------------------------------------------- */
+.freeEntryToggle {
+  min-height: var(--tap-min);
+  width: 100%;
+  margin-top: var(--space-3);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-action);
+  background: transparent;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.freeEntryToggle:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.freeEntryField {
+  margin-top: var(--space-3);
+}
+
+.numberInput {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.numberInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-color: var(--color-focus);
+}
+
+.textInput {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.textInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-color: var(--color-focus);
+}
+
+.textarea {
+  composes: textInput;
+  min-height: calc(var(--tap-min) * 3);
+  padding: var(--space-3) var(--space-4);
+  resize: vertical;
+  font-family: var(--font-ui);
+  line-height: 1.5;
+}
+
+.errorText {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+/* ---------------------------------------------------------------------
+   Photo capture
+   --------------------------------------------------------------------- */
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.photoThumbWrap {
+  position: relative;
+}
+
+.photoThumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  display: block;
+}
+
+.photoRemoveButton {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  min-width: 32px;
+  min-height: 32px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-danger);
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.photoRemoveButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.photoCaptureButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  width: 100%;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-action);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-action);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.photoCaptureButton:active {
+  background: var(--color-action);
+  color: var(--color-surface-raised);
+}
+
+.photoCaptureButton:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.hiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.photoProcessing {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------------
+   Nav bar (Back / Next) — bottom of every screen
+   --------------------------------------------------------------------- */
+.navBar {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+}
+
+.navButton {
+  flex: 1;
+  min-height: var(--tap-min);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+}
+
+.navButtonBack {
+  composes: navButton;
+  color: var(--color-action);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+}
+
+.navButtonBack:active {
+  background: var(--color-border);
+}
+
+.navButtonNext {
+  composes: navButton;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: 2px solid var(--color-action);
+}
+
+.navButtonNext:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
+}
+
+.navButtonNext:disabled {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.navButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Review screen
+   --------------------------------------------------------------------- */
+.reviewList {
+  list-style: none;
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.reviewRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reviewRowLabel {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.reviewRowValue {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.reviewRowFlag {
+  composes: reviewRowValue;
+  color: var(--color-status-borderline);
+}
+
+.completeButton {
+  width: 100%;
+  min-height: var(--tap-min);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-status-not-sd);
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.completeButton:active {
+  background: var(--color-action-pressed);
+}
+
+.completeButton:disabled {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.completeButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.completeState {
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+}
+
+.completeHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-status-not-sd);
+}
+
+/* ---------------------------------------------------------------------
+   Loading / empty / error states
+   --------------------------------------------------------------------- */
+.statePanel {
+  margin: var(--space-6) var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.gpsNote {
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}

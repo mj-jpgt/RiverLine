@@ -13,3 +13,9 @@ public/swe-worker*.js
 public/swe-worker*.js.map
 *.tsbuildinfo
 .pnpm-store/
+
+# T-C3 capture module: photo bytes for the offline-sync endpoint
+# (app/api/capture/sync/route.ts). Filesystem storage is an explicit MVP
+# swap-in for real object storage (Supabase Storage is not wired up yet) —
+# see docs/journal/2026-08-17-c3-capture.md.
+/uploads/

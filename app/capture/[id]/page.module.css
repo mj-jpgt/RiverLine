@@ -1,13 +1,12 @@
 .main {
   min-height: 100dvh;
-  padding: var(--space-6) var(--space-5) var(--space-8);
-  max-width: 40rem;
-  margin: 0 auto;
 }
 
 .backLink {
-  display: inline-block;
-  margin-bottom: var(--space-5);
+  display: block;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-5) 0;
   font-size: var(--text-base);
   font-weight: 600;
   color: var(--color-action);
@@ -56,4 +55,46 @@
 
 .body:last-child {
   margin-bottom: 0;
+}
+
+.dt {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.statePanel {
+  max-width: 40rem;
+  margin: var(--space-6) auto;
+  padding: var(--space-5);
+}
+
+.errorPanel {
+  composes: card;
+  composes: statePanel;
+  border-color: var(--color-danger);
+}
+
+.statePanelText {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-base);
+  color: var(--color-danger);
+  line-height: 1.5;
+}
+
+.retryButton {
+  width: 100%;
+  min-height: var(--tap-min);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-action);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+}
+
+.retryButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
 }
