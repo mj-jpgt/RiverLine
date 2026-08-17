@@ -90,5 +90,5 @@ persisted; e2e review spec asserts grouped rendering; all existing gates green.
 Print-first PDF; refuses with explicit state when ordinance_citation is null.
 ### T-A2 Dashboard — src/modules/a2-dashboard/
 Status counts, caseload list, CSV export. Map optional, last.
-### T-A3 SDE export — src/modules/a3-sde-export/
+### [x] T-A3 SDE export — src/modules/a3-sde-export/
 Export matching verified 12/7 element structure.
