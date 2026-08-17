@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/db/migrate.mjs",
     "db:seed": "node scripts/db/seed.mjs",
+    "ingest:parcels": "node scripts/preprocess/ingest-parcels.mjs",
     "verify": "node scripts/verify.mjs"
   },
   "dependencies": {

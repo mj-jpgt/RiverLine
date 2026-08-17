@@ -18,7 +18,7 @@ read tenant B via the app db client; immutability probes (UPDATE/DELETE on
 calculations raises; DELETE on determinations raises; determination UPDATE
 writes audit_log) — AGENTS.md rules 10/11; `pnpm test:e2e` login spec passes.
 
-### T-C2 M1 structure registry + real parcel ingest
+### [x] T-C2 M1 structure registry + real parcel ingest
 **Module:** scripts/preprocess/, src/core/registry/
 **May read:** docs/data-contracts/hamilton-county-parcels.md, fema-nfhl.md,
 dlgf-property-classes.md, data/raw/*
