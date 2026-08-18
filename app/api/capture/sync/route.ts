@@ -2,11 +2,11 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { PoolClient } from "pg";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { withTenant } from "@/shared/db";
+import { getStorageDriver } from "@/shared/storage";
 import { mergeScalarFields, resolveElementMerge, type ScalarSnapshot } from "../_lib/merge";
 import { checkRateLimit, rateLimitResponse } from "@/shared/security/rate-limit";
 import { MAX_PHOTO_BYTES, MAX_SYNC_BODY_BYTES, sniffImageType } from "@/shared/security/upload-validation";
@@ -19,14 +19,14 @@ import { MAX_PHOTO_BYTES, MAX_SYNC_BODY_BYTES, sniffImageType } from "@/shared/s
 // here is expressed as an idempotent upsert so a retry never duplicates a
 // row (verified by test/e2e/offline-capture.spec.ts's idempotency probe).
 //
-// Photo storage decision (documented per task instructions — no schema
-// change, no new dependency): Supabase storage is not wired up for this
-// project yet, so photo bytes are written to the local filesystem under a
-// gitignored uploads/<jurisdictionId>/<sha256>.jpg (content-addressed, so a
-// retried/duplicate photo is a no-op write), and `photos.storage_key` stores
-// that relative path. Swapping this for real object storage (S3/Supabase
-// Storage/etc.) later is a drop-in change to writePhotoFile() below — no
-// other code depends on the filesystem specifically.
+// Photo storage decision: photo bytes go through src/shared/storage's
+// pluggable StorageDriver (STORAGE_DRIVER=local|supabase — see
+// docs/adr/0008-object-storage.md), keyed content-addressed as
+// <jurisdictionId>/<sha256>.jpg (so a retried/duplicate photo is a no-op
+// write either driver honors), and `photos.storage_key` stores that key.
+// The local driver preserves the original gitignored uploads/ filesystem
+// behavior byte-for-byte; the supabase driver is what makes this route
+// deployable on Vercel's ephemeral filesystem.
 //
 // Payload is JSON + base64 photos, not multipart — see
 // src/core/capture/payload.ts's file header for the documented tradeoff.
@@ -88,8 +88,6 @@ const bodySchema = z.object({
   photos: z.array(photoSchema),
 });
 
-const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
-
 // Looser than the auth routes — field devices legitimately retry with
 // backoff after a dropped connection (this endpoint is designed idempotent
 // specifically for that), and a device catching up after being offline for
@@ -100,15 +98,13 @@ const SYNC_LIMIT = 30;
 const SYNC_WINDOW_MS = 60 * 1000;
 
 async function writePhotoFile(jurisdictionId: string, sha256: string, base64: string): Promise<string> {
-  const dir = path.join(UPLOADS_ROOT, jurisdictionId);
-  await mkdir(dir, { recursive: true });
   const storageKey = path.posix.join(jurisdictionId, `${sha256}.jpg`);
-  const filePath = path.join(dir, `${sha256}.jpg`);
   const bytes = Buffer.from(base64, "base64");
-  // Content-addressed: writing the same bytes to the same path is a safe
-  // no-op on retry, so this does not need an existence check for
-  // correctness (an existence check would only save an fs write).
-  await writeFile(filePath, bytes);
+  // Content-addressed: writing the same bytes to the same key is a safe
+  // no-op on retry (both drivers honor this — see
+  // src/shared/storage/local.ts and supabase.ts), so this does not need an
+  // existence check for correctness.
+  await getStorageDriver().put(storageKey, bytes, "image/jpeg");
   return storageKey;
 }
 

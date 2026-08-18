@@ -2,13 +2,10 @@
 // jurisdiction-scoped through withTenant() (RLS-enforced), same pattern
 // src/core/determination/queries.ts already establishes.
 import type { PoolClient } from "pg";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { withTenant } from "@/shared/db";
+import { getStorageDriver } from "@/shared/storage";
 import { buildLetterFacts, isNonEmptyOrdinanceCitation } from "./pure";
 import type { LetterPreviewResult, ThresholdResultForLetter } from "./types";
-
-const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
 
 function toIso(value: unknown): string {
   return value instanceof Date ? value.toISOString() : String(value);
@@ -135,12 +132,11 @@ export async function getLetterPreview(
   });
 }
 
-/** Reads the archived HTML letter off disk. storage_key is content-scoped
+/** Reads the archived HTML letter back through src/shared/storage's
+ * StorageDriver. storage_key is content-scoped
  * (letters/<jurisdictionId>/<letterId>.html) and only ever written by
- * actions.ts's issueLetter — never derived from unsanitized input, so a
- * direct path.join is safe (same pattern app/api/photos/[id]/route.ts
- * already uses). */
+ * actions.ts's issueLetter. */
 export async function readArchivedLetterHtml(storageKey: string): Promise<string> {
-  const filePath = path.join(UPLOADS_ROOT, storageKey);
-  return readFile(filePath, "utf8");
+  const { bytes } = await getStorageDriver().get(storageKey);
+  return bytes.toString("utf8");
 }

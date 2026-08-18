@@ -7,25 +7,23 @@
 // live inside this module (src/modules/a1-letters/), same as its
 // queries/pure files; app/letters/ route handlers call straight into them.
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import type { PoolClient } from "pg";
 import { withTenant } from "@/shared/db";
+import { getStorageDriver } from "@/shared/storage";
 import { getLetterPreview } from "./queries";
 import { isNonEmptyOrdinanceCitation, isValidAppealWindowDays, renderLetterHtml, TEMPLATE_VERSION } from "./pure";
 import type { IssueLetterResult, SetOrdinanceResult } from "./types";
-
-const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
 
 /**
  * Issues a letter for an adopted, definite (SD/NOT_SD) determination whose
  * jurisdiction has a real ordinance citation on file. Re-validates the full
  * state server-side (never trusts a UI that rendered "ready" a moment ago —
  * the citation could have raced, though nothing in this codebase currently
- * un-sets one). Writes the archived HTML to
- * uploads/letters/<jurisdictionId>/<letterId>.html, INSERTs the immutable
- * `letters` row, links determinations.letter_id, and audits the issue —
- * mirrors the "override -> audit -> new row" discipline T-C5 established.
+ * un-sets one). Writes the archived HTML through src/shared/storage's
+ * StorageDriver under letters/<jurisdictionId>/<letterId>.html, INSERTs the
+ * immutable `letters` row, links determinations.letter_id, and audits the
+ * issue — mirrors the "override -> audit -> new row" discipline T-C5
+ * established.
  */
 export async function issueLetter(
   jurisdictionId: string,
@@ -41,9 +39,7 @@ export async function issueLetter(
   const storageKey = `letters/${jurisdictionId}/${letterId}.html`;
   const html = renderLetterHtml(preview.facts, { issued: true });
 
-  const filePath = path.join(UPLOADS_ROOT, storageKey);
-  await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, html, "utf8");
+  await getStorageDriver().put(storageKey, Buffer.from(html, "utf8"), "text/html");
 
   return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
     await client.query(

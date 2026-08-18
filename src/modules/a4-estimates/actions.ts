@@ -3,25 +3,20 @@
 // app/api/capture/sync/route.ts and app/determination/_lib/actions.ts
 // already use.
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { PoolClient } from "pg";
 import { withTenant } from "@/shared/db";
+import { getStorageDriver } from "@/shared/storage";
 import { MAX_PHOTO_BYTES, sniffImageType } from "@/shared/security/upload-validation";
 import { combinedDocumentHashInput } from "./parser";
 import type { ConfirmEstimateInput, ConfirmEstimateResult, CreateEstimateInput, CreateEstimateResult } from "./types";
 
-const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
-
 async function writeEstimatePageFile(jurisdictionId: string, sha256: string, base64: string): Promise<string> {
-  const dir = path.join(UPLOADS_ROOT, jurisdictionId, "estimates");
-  await mkdir(dir, { recursive: true });
   const storageKey = path.posix.join(jurisdictionId, "estimates", `${sha256}.jpg`);
-  const filePath = path.join(dir, `${sha256}.jpg`);
   // Content-addressed (same convention as app/api/capture/sync/route.ts's
-  // writePhotoFile): writing identical bytes to the same path on a retried
-  // upload is a safe no-op.
-  await writeFile(filePath, Buffer.from(base64, "base64"));
+  // writePhotoFile): writing identical bytes to the same key on a retried
+  // upload is a safe no-op (src/shared/storage's StorageDriver contract).
+  await getStorageDriver().put(storageKey, Buffer.from(base64, "base64"), "image/jpeg");
   return storageKey;
 }
 

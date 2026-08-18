@@ -1,16 +1,16 @@
 import { cookies } from "next/headers";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { withTenant } from "@/shared/db";
+import { getStorageDriver } from "@/shared/storage";
 
 // Serves a photo's bytes for the review screen's thumbnail + click-to-full
 // views (task requirement: "photos (thumbnails, click to full)"). Reads
 // photos.storage_key (jurisdiction-scoped by RLS — a cross-tenant id never
-// resolves a row here) and streams the file T-C3's sync route wrote under
-// uploads/<jurisdictionId>/<sha256>.jpg. No route existed to read photos
-// back before this task; capture (T-C3) only ever wrote them.
-const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
+// resolves a row here) and streams the bytes back through this server (never
+// a public/signed bucket URL — see docs/adr/0008-object-storage.md "why
+// serving stays an authenticated proxy") from wherever T-C3's sync route
+// wrote them (src/shared/storage's StorageDriver — local filesystem or
+// Supabase Storage, per STORAGE_DRIVER).
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,15 +29,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       return new Response("Not found", { status: 404 });
     }
 
-    // storage_key is content-addressed (jurisdictionId/sha256.jpg), written
-    // only by app/api/capture/sync/route.ts — never derived from unsanitized
-    // user input, so a direct path.join is safe here.
-    const filePath = path.join(UPLOADS_ROOT, storageKey);
-    const bytes = await readFile(filePath);
+    const { bytes, contentType } = await getStorageDriver().get(storageKey);
     return new Response(new Uint8Array(bytes), {
       status: 200,
       headers: {
-        "Content-Type": "image/jpeg",
+        "Content-Type": contentType,
         "Cache-Control": "private, max-age=86400",
       },
     });

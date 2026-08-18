@@ -1,57 +1,66 @@
-# Vercel: not currently supported
+# Vercel: supported (storage blocker resolved 2026-08-18)
 
-Build spec §2.8 lists Vercel as an option alongside a self-hosted VPS. Having
-now built and proven the VPS/Docker path (`docs/deploy/self-host.md`), the
-honest assessment is: **Vercel does not work today, and won't until one
-piece of work — real object storage — happens first.** This doc says exactly
-what's blocking it and what changes when it's done. No workaround is
-pretended here; the recommendation until then is self-host.
+Build spec §2.8 lists Vercel as an option alongside a self-hosted VPS. This
+doc previously said Vercel would not work until real object storage was
+wired up. That work landed 2026-08-18 (`docs/adr/0008-object-storage.md`,
+`src/shared/storage/`): the filesystem blocker below is resolved by setting
+`STORAGE_DRIVER=supabase` in the Vercel project's env vars. Self-host
+(`docs/deploy/self-host.md`) remains a valid option too — nothing about
+this change removes it — but it is no longer the only option.
 
-## The actual blocker: filesystem uploads
+## Resolved: filesystem uploads
 
-Photo bytes, generated letter files, and estimate-document uploads are all
-written to the local filesystem, not object storage — a deliberate MVP
-shortcut, documented at the time it was made:
+Photo bytes, generated letter files, and estimate-document uploads used to
+be written to the local filesystem — a deliberate MVP shortcut, documented
+at the time it was made, and explicitly called out as a swap-in point
+(`docs/journal/2026-08-17-c3-capture.md` → "Photo storage decision"). All
+six of the actual read/write sites now go through
+`src/shared/storage`'s `StorageDriver` interface instead of `node:fs`
+directly:
 
-- `app/api/capture/sync/route.ts` — photo bytes, `uploads/<jurisdiction_id>/<sha256>.jpg`
-- `src/modules/a1-letters/actions.ts` / `queries.ts` — rendered letters, `uploads/letters/<jurisdiction_id>/<letterId>.html`
-- `app/api/photos/[id]/route.ts` — reads photos back from the same tree
-- The A4 contractor-estimate-intake module (`app/api/estimates/`,
-  `src/modules/a4-estimates/`, in progress as of this writing) follows the
-  same `UPLOADS_ROOT` filesystem pattern for uploaded estimate documents —
-  same blocker, same fix, once it lands
+- `app/api/capture/sync/route.ts` — photo bytes (write)
+- `app/api/photos/[id]/route.ts` — photo bytes (serve)
+- `src/modules/a4-estimates/actions.ts` — estimate document pages (write)
+- `app/api/estimates/document/[estimateId]/image/[pageIndex]/route.ts` — estimate document pages (serve)
+- `src/modules/a1-letters/actions.ts` — archived letter HTML (write)
+- `src/modules/a1-letters/queries.ts` — archived letter HTML (serve)
 
-All of them resolve against `UPLOADS_ROOT = path.join(process.cwd(), "uploads")`
-and were explicitly called out as a swap-in point when written — see
-`docs/journal/2026-08-17-c3-capture.md` → "Photo storage decision":
-"Swapping this for real object storage later (S3, Supabase Storage) is a
-drop-in change to `writePhotoFile()` ...; nothing else depends on the
-filesystem specifically."
+Key format (content-hash-based for photos/estimate pages,
+`letters/<jurisdictionId>/<letterId>.html` for letters) is completely
+unchanged — `photos.storage_key` / `estimates.storage_key` /
+`letters.pdf_storage_key` still hold the exact same opaque strings they
+always did; `schema/core.sql` was not touched.
 
-Vercel's serverless functions have no persistent, writable, shared
-filesystem across invocations or instances (each invocation may run on a
-different, ephemeral instance). Every one of the routes above would either
-fail outright or silently lose data (write succeeds against one instance's
-ephemeral disk, then a later read on a different instance 404s) the moment
-this app ran on Vercel instead of a long-lived container. This is not a
-performance concern to tune around — it is a correctness/data-loss problem,
-and for this project specifically (`photos`, `letters` — the evidentiary
-record behind a legal determination) an unacceptable one.
+### Vercel deploy: exact env vars this needs
 
-## What would have to change
+Set these in the Vercel project's Environment Variables (Production —
+and Preview, if preview deploys should also work, since Preview
+deployments are just as serverless/ephemeral-filesystem as Production):
 
-1. **Wire up real object storage** for the four write paths above — build
-   spec §2 already names the intended target: Supabase Storage or an
-   S3-compatible bucket, content-hashed (SHA-256) at upload, same as today's
-   filesystem scheme (the hash-based addressing carries over unchanged).
-   This needs an ADR (AGENTS.md rule 3 — new dependency: an S3 client, or
-   `@supabase/storage-js` if going the Supabase-Storage route) and touches
-   exactly the four files listed above plus their tests.
-2. **`schema/core.sql` is unaffected** — `photos.storage_key` and the
-   letters/estimates equivalents are already opaque string keys, not
-   filesystem-path-shaped in a way that assumes a local disk. No schema
-   change, per the journal note above.
-3. **Migrations**: Vercel has no long-lived container to run
+```
+STORAGE_DRIVER=supabase
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service role key — server-only secret, never NEXT_PUBLIC_*>
+STORAGE_BUCKET=<bucket name, e.g. "uploads">
+```
+
+The bucket must be created **private** in Supabase Storage (not the
+"public bucket" toggle) — every serving route still authenticates the
+request and checks tenant scoping via `withTenant`/RLS before streaming
+bytes back through this app's own server (an authenticated proxy, not a
+public/signed bucket URL — see ADR 0008's "Why serving stays an
+authenticated proxy"). `getStorageDriver()` (`src/shared/storage/index.ts`)
+throws immediately, naming exactly which env var is missing, if
+`STORAGE_DRIVER=supabase` is set without the other three — this is a fail
+loud, not fail silent, misconfiguration.
+
+Everything else `docs/riverline-sdd-build-spec.md` §2 already assumes for
+production (Supabase-hosted Postgres via `DATABASE_URL`) is unrelated to
+this change and unaffected.
+
+## What still applies on a Vercel deploy
+
+1. **Migrations**: Vercel has no long-lived container to run
    `docker-entrypoint.sh`'s boot-time migration step in. `scripts/db/migrate.mjs`
    would need to run from a separate context — a deploy-hook / CI step, or a
    one-off `vercel exec` / GitHub Action step — before traffic shifts to the
@@ -59,27 +68,26 @@ record behind a legal determination) an unacceptable one.
    still matters here, arguably more: a Vercel deploy can trigger multiple
    build/deploy pipelines in parallel far more easily than a single VPS ever
    would.
-4. **Database**: build spec already assumes Supabase-hosted Postgres in
+2. **Database**: build spec already assumes Supabase-hosted Postgres in
    production (`docker-compose.yml`'s local Postgres is dev/test-only per
    `docs/adr/0004`) — this part needs no change for a Vercel move, only for
    a VPS move (where you'd point `DATABASE_URL` at self-hosted Postgres
    instead, as `docker-compose.prod.yml` does).
-5. **Auth/session**: magic-link + signed session cookie
+3. **Auth/session**: magic-link + signed session cookie
    (`src/core/auth/`) has no filesystem dependency and no dependency on a
    long-lived process — this part is already Vercel-compatible as written.
-6. **HTTPS**: free on Vercel (every deployment gets one automatically) —
+4. **HTTPS**: free on Vercel (every deployment gets one automatically) —
    this actually removes a piece of work relative to self-hosting (no Caddy
    config, no ACME).
-7. **B4 (email transport, `docs/BLOCKERS.md`)** is orthogonal to Vercel vs.
+5. **B4 (email transport, `docs/BLOCKERS.md`)** is orthogonal to Vercel vs.
    self-host — it blocks production login either way and needs to be
    resolved regardless of hosting choice.
 
 ## Recommendation
 
-Self-host (`docs/deploy/self-host.md`) for now — proven, working, matches
-what build spec §2.8 calls the fallback for "a jurisdiction demands it," and
-sidesteps the storage rewrite entirely since a VPS's filesystem really is
-persistent and shared across the one long-lived container. Revisit Vercel
-once object storage is wired up for another reason (e.g. it becomes
-necessary for horizontal scaling) — at that point Vercel becomes a real
-option with no filesystem blocker left, not before.
+Either Vercel or self-host (`docs/deploy/self-host.md`) is now a real
+option — the choice is no longer forced by the storage blocker. Vercel
+with `STORAGE_DRIVER=supabase` needs the migration-timing item above
+(#1) handled as a deploy-pipeline step; self-host remains the simpler
+choice if a jurisdiction specifically wants everything (app + Postgres +
+storage) on one box.
