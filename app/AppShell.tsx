@@ -48,6 +48,8 @@ const NAV_ITEMS: NavItemDef[] = [
   { href: "/registry", label: "Find structure", roles: ["admin", "assessor", "official", "viewer"] },
   { href: "/determination", label: "Review queue", roles: ["admin", "official"] },
   { href: "/dashboard", label: "Dashboard", roles: ["admin", "official"] },
+  // T-W5: admin-only console (cost tables, jurisdiction settings, readiness).
+  { href: "/admin", label: "Administration", roles: ["admin"] },
 ];
 
 function sectionLabelFor(pathname: string): string {
@@ -57,6 +59,7 @@ function sectionLabelFor(pathname: string): string {
   if (pathname.startsWith("/determination")) return "Determination review";
   if (pathname.startsWith("/calculation")) return "Calculation";
   if (pathname.startsWith("/letters")) return "Determination letter";
+  if (pathname.startsWith("/admin")) return "Administration";
   return "RiverLine SDD";
 }
 

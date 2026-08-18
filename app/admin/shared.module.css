@@ -1,0 +1,533 @@
+/* T-W5 admin console. Shared across every /admin/* page (imported by
+   relative path from each page.tsx) rather than duplicated per route —
+   same token set and component shapes app/dashboard/page.module.css and
+   app/letters/[clientId]/page.module.css already established; this file
+   does not invent a new visual language, it reuses theirs. Tokens only,
+   desktop-admin context (dense tables/forms permitted here per
+   docs/design/direction.md -> "Layout"), every interactive element ships
+   default/hover/active/focus-visible/disabled/loading/error states. */
+
+.main {
+  min-height: 100dvh;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.mainWide {
+  composes: main;
+  max-width: 72rem;
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.subhead {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: var(--space-4);
+  color: var(--color-action);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.backLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Section --- */
+
+.section {
+  margin-bottom: var(--space-6);
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.sectionHeading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.sectionSubhead {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* --- Readiness panel (the /admin landing screen) ----------------------- */
+
+.readinessGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.readinessRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.readinessRowNotSet {
+  composes: readinessRow;
+  border: 2px solid var(--color-status-borderline);
+}
+
+.readinessMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.readinessLabel {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.readinessBlockedText {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.readinessAction {
+  flex: none;
+}
+
+/* --- Status badge — label + color always, never color alone
+   (docs/design/direction.md "Color and meaning") --- */
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  border: 2px solid currentColor;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.statusBadgeOk {
+  composes: statusBadge;
+  color: var(--color-status-not-sd);
+}
+
+.statusBadgeNotSet {
+  composes: statusBadge;
+  color: var(--color-status-borderline);
+}
+
+.statusBadgeMuted {
+  composes: statusBadge;
+  color: var(--color-text-muted);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* --- Forms --------------------------------------------------------------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 32rem;
+}
+
+.formLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.formHint {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.textInput,
+.dateInput {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  font-size: var(--text-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+}
+
+.textarea {
+  min-height: 8rem;
+  padding: var(--space-3);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  resize: vertical;
+}
+
+.jsonTextarea {
+  composes: textarea;
+  min-height: 16rem;
+  font-family: var(--font-data);
+}
+
+.formRowWide {
+  composes: formRow;
+  max-width: none;
+}
+
+.numberInput {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  font-size: var(--text-base);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  max-width: 12rem;
+}
+
+.textInput:focus-visible,
+.dateInput:focus-visible,
+.textarea:focus-visible,
+.numberInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.textInput:disabled,
+.dateInput:disabled,
+.textarea:disabled,
+.numberInput:disabled {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.fieldError {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+.fieldErrorList {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-danger);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* --- Disclosure copy (B1 no-fabrication notice) ------------------------- */
+
+.noticePanel {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 2px solid var(--color-status-borderline);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.noticeHeading {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.noticeText {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.noticeText a {
+  color: var(--color-action);
+  font-weight: 600;
+}
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--color-action-hover);
+}
+
+.primaryButton:active:not(:disabled) {
+  background: var(--color-action-pressed);
+}
+
+.primaryButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.primaryButton:disabled {
+  background: var(--color-border);
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+.secondaryButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.secondaryButton:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.modeToggleRow {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.modeButton,
+.modeButtonActive {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+}
+
+.modeButton:hover {
+  background: var(--color-surface);
+}
+
+.modeButtonActive {
+  background: var(--color-action);
+  border-color: var(--color-action);
+  color: var(--color-surface-raised);
+}
+
+.modeButton:focus-visible,
+.modeButtonActive:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Cost-table element grid --------------------------------------------- */
+
+.elementGroupHeading {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+.elementGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+
+.elementField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.elementLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.elementInputWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.elementUnit {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* --- Cost tables list (dense table, desktop admin context) -------------- */
+
+.tableScroll {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface-raised);
+}
+
+.th {
+  text-align: left;
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-border);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.td {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  border-bottom: 1px solid var(--color-surface);
+  color: var(--color-text);
+}
+
+.tdNum {
+  composes: td;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- State panels (empty / error) -------------------------------------- */
+
+.statePanel {
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+
+.statePanelText {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.errorPanel {
+  composes: statePanel;
+  border-color: var(--color-danger);
+}
+
+.errorPanel .statePanelText {
+  color: var(--color-danger);
+}
+
+.successPanel {
+  composes: statePanel;
+  border-color: var(--color-status-not-sd);
+}
+
+.successPanel .statePanelText {
+  color: var(--color-status-not-sd);
+  font-weight: 600;
+}

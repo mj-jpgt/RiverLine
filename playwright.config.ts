@@ -16,7 +16,12 @@ export default defineConfig({
   // what the webServer below points at. Running it here would always fail
   // at "no cost table loaded" for a reason that has nothing to do with a
   // regression — see playwright.determination.config.ts's file header.
-  testIgnore: ["**/offline-capture.spec.ts", "**/determination.spec.ts", "**/a1-letters.spec.ts"],
+  // admin.spec.ts (T-W5) joined this exclusion list for the same reason as
+  // determination.spec.ts / a1-letters.spec.ts: it needs its own fresh
+  // jurisdiction (zero cost_tables rows to start) and its own dedicated
+  // dev server (`pnpm test:admin`, scripts/test-admin.mjs + PORT 3900),
+  // never riverline_dev.
+  testIgnore: ["**/offline-capture.spec.ts", "**/determination.spec.ts", "**/a1-letters.spec.ts", "**/admin.spec.ts"],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
