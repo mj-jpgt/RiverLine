@@ -1,0 +1,562 @@
+/* A4 estimate upload + confirm flow. Tokens only; every interactive
+   element ≥48px; buttons for choices, never sliders
+   (docs/design/direction.md, docs/agents/SUBAGENT.md). */
+
+.uploadArea {
+  padding: var(--space-6) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.fileButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-6);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.fileButton:hover {
+  background: var(--color-action-hover);
+}
+
+.fileButton:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.hiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.uploadHint {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.selectedFilesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.selectedThumbWrap {
+  position: relative;
+}
+
+.selectedThumb {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.removeThumbButton {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-danger);
+  border: 2px solid var(--color-surface-raised);
+  border-radius: var(--radius-sm);
+}
+
+.removeThumbButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.primaryButton {
+  min-height: var(--tap-min);
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: var(--space-5);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+}
+
+.primaryButton:hover {
+  background: var(--color-action-hover);
+}
+
+.primaryButton:active {
+  background: var(--color-action-pressed);
+}
+
+.primaryButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.primaryButton:disabled {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  min-height: var(--tap-min);
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: var(--space-3);
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.secondaryButton:hover {
+  background: var(--color-surface);
+}
+
+.secondaryButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.progressPanel {
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.progressText {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.progressBar {
+  width: 100%;
+  accent-color: var(--color-action);
+  border-radius: var(--radius-sm);
+}
+
+.progressBar::-webkit-progress-bar {
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+.progressPercent {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.errorPanel {
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-danger);
+  border-radius: var(--radius-md);
+}
+
+.errorText {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+/* --- Confirmation screen ------------------------------------------------ */
+
+.confirmLayout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.imageColumn {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.pageImage {
+  display: block;
+  max-width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.highlightOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.highlightRect {
+  /* rgba() of --color-focus (#2491ff = rgb(36,145,255)) with alpha — same
+     derive-from-token-hex technique review.module.css's .lightboxOverlay
+     already uses for rgba(27,27,27,0.85) from --color-text (#1b1b1b). */
+  fill: rgba(36, 145, 255, 0.18);
+  stroke: var(--color-focus);
+  stroke-width: 6;
+}
+
+.pageTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.pageTab,
+.pageTabSelected {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.pageTabSelected {
+  background: var(--color-action);
+  border-color: var(--color-action);
+  color: var(--color-surface-raised);
+}
+
+.pageTab:focus-visible,
+.pageTabSelected:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.sectionHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.sectionSubtext {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.candidateRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-2);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.candidateRowFocused {
+  composes: candidateRow;
+  border-color: var(--color-focus);
+  border-width: 2px;
+}
+
+.candidateRowUnreadable {
+  composes: candidateRow;
+  border-color: var(--color-status-sd);
+}
+
+.candidateCheckbox,
+.candidateRadio {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  accent-color: var(--color-action);
+}
+
+.candidateDescription {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-base);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.candidateAmount {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.candidateUnreadableTag {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-status-sd);
+}
+
+.verifyLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.reconciliationPanel {
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.reconciliationOk {
+  composes: reconciliationPanel;
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-status-not-sd);
+}
+
+.reconciliationMismatch {
+  composes: reconciliationPanel;
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-status-sd);
+}
+
+.reconciliationText {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.sanityPanel {
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-status-sd);
+  border-radius: var(--radius-md);
+}
+
+.sanityText {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-status-sd);
+  line-height: 1.5;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  cursor: pointer;
+}
+
+.checkboxLabel:has(input:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.checkbox {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  margin-top: 2px;
+  accent-color: var(--color-action);
+}
+
+.checkboxText {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.totalInputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.dollarPrefix {
+  font-family: var(--font-data);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.totalInput {
+  flex: 1;
+  box-sizing: border-box;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.totalInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.manualLineItemRow {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  align-items: center;
+}
+
+.manualDescriptionInput {
+  flex: 2;
+  box-sizing: border-box;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.manualAmountInput {
+  composes: manualDescriptionInput;
+  flex: 1;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.manualDescriptionInput:focus-visible,
+.manualAmountInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.removeLineButton {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-danger);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+}
+
+.removeLineButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.addLineButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-action);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+}
+
+.addLineButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.emptyCandidatesNote {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+}
+
+.field {
+  margin-bottom: var(--space-4);
+}
+
+.notesTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: calc(var(--tap-min) * 2);
+  padding: var(--space-3) var(--space-4);
+  margin-top: var(--space-2);
+  font-size: var(--text-base);
+  font-family: var(--font-ui);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  resize: vertical;
+}
+
+.notesTextarea:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.successPanel {
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-status-not-sd);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.successText {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-status-not-sd);
+}
