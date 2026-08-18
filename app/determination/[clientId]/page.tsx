@@ -10,6 +10,7 @@ import { OverrideValueControl } from "./_components/OverrideValueControl";
 import { AdoptAction } from "./_components/AdoptAction";
 import { SupersedeAction } from "./_components/SupersedeAction";
 import { PhotoPanel } from "./_components/PhotoPanel";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./review.module.css";
 
 // M4 official review screen (T-C5): every input visible, per-element and
@@ -101,7 +102,7 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
 
   if (result.status === "no_calculation") {
     return (
-      <main className={styles.main}>
+      <main className={`${styles.main} ${motion.pageEnter}`}>
         <Link href="/determination" className={styles.backLink}>
           ← Back to queue
         </Link>
@@ -128,7 +129,7 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
   const valueSourceLabel = VALUE_SOURCE_LABELS[detail.valueSource] ?? detail.valueSource;
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <Link href="/determination" className={styles.backLink}>
         ← Back to queue
       </Link>

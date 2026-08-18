@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "@/shared/ui";
 import styles from "./page.module.css";
 
 export default function LetterLoading() {
@@ -9,6 +10,7 @@ export default function LetterLoading() {
       </div>
       <div className={styles.blockedPanel} role="status" aria-live="polite">
         <p className={styles.blockedText}>Loading the letter…</p>
+        <LoadingIndicator />
       </div>
     </main>
   );

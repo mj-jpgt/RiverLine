@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingIndicator } from "@/shared/ui";
 import styles from "../capture.module.css";
 
 export type BannerState = "offline" | "syncing" | "error" | "synced" | "hidden";
@@ -41,6 +42,7 @@ export function OfflineBanner({ state, queuedCount, errorMessage, onSyncNow }: O
   return (
     <div className={className} role="status" aria-live="polite">
       <p className={styles.bannerText}>{text}</p>
+      {state === "syncing" ? <LoadingIndicator /> : null}
       {showSyncButton ? (
         <button type="button" className={styles.syncNowButton} onClick={onSyncNow}>
           Sync now

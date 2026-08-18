@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { getStructureById } from "@/core/registry";
 import { OccupancyEditor } from "./OccupancyEditor";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 const VALUE_SOURCE_LABELS: Record<string, string> = {
@@ -47,7 +48,7 @@ export default async function StructureDetailPage({
   const valueSourceLabel = VALUE_SOURCE_LABELS[structure.valueSource] ?? structure.valueSource;
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <Link href="/registry" className={styles.backLink}>
         ← Back to search
       </Link>

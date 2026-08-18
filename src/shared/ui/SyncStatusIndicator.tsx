@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "./LoadingIndicator";
 import styles from "./nav.module.css";
 
 // Compact, header-level variant of the same offline/sync semantics
@@ -48,6 +49,7 @@ export function SyncStatusIndicator({ status, queuedCount, errorMessage, onSyncN
   return (
     <div className={className} role="status" aria-live="polite">
       <p className={styles.syncText}>{text}</p>
+      {status === "syncing" ? <LoadingIndicator /> : null}
       {showButton ? (
         <button type="button" className={styles.syncButton} onClick={onSyncNow}>
           Sync now

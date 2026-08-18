@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import type { RegistryNearbyResult, RegistrySearchResult } from "@/core/registry";
+import { LoadingIndicator } from "@/shared/ui";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 type Mode = "search" | "near";
@@ -162,6 +164,7 @@ export function RegistrySearch() {
           <p className={styles.statePanelText}>
             {mode === "near" ? "Searching nearby structures…" : "Searching…"}
           </p>
+          <LoadingIndicator />
         </div>
       ) : null}
 
@@ -182,7 +185,7 @@ export function RegistrySearch() {
       ) : null}
 
       {state === "loaded" && results.length > 0 ? (
-        <div>
+        <div className={motion.fadeIn}>
           <p className={styles.resultsHeading}>
             {mode === "near" ? "Nearest structures" : `${results.length} match${results.length === 1 ? "" : "es"}`}
           </p>

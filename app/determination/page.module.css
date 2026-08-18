@@ -59,10 +59,18 @@
   border: 1px solid var(--color-border);
   color: var(--color-text);
   background: var(--color-surface-raised);
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
 }
 
 .filterButton:hover {
   background: var(--color-surface);
+}
+
+.filterButton:active {
+  background: var(--color-border);
+  border-color: var(--color-action);
 }
 
 .filterButton:focus-visible,
@@ -75,6 +83,16 @@
   background: var(--color-action);
   border-color: var(--color-action);
   color: var(--color-surface-raised);
+}
+
+.filterButtonActive:hover {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.filterButtonActive:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
 }
 
 /* --- Queue list ------------------------------------------------------- */
@@ -105,6 +123,10 @@
   border-radius: var(--radius-md);
   color: var(--color-text);
   text-decoration: none;
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
 }
 
 .queueLink:hover {
@@ -112,7 +134,9 @@
 }
 
 .queueLink:active {
+  background: var(--color-surface);
   border-color: var(--color-action);
+  transform: translateY(1px);
 }
 
 .queueLink:focus-visible {

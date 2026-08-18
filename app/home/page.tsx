@@ -7,6 +7,7 @@ import { getReviewQueue } from "@/core/determination";
 import { isNonEmptyOrdinanceCitation } from "@/modules/a1-letters";
 import { withTenant } from "@/shared/db";
 import { QueuedAssessments } from "./QueuedAssessments";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 // Role-aware launchpad (T-W1). Replaces the T-C1 generic "session plumbing
@@ -19,8 +20,10 @@ import styles from "./page.module.css";
 // out"})) still resolve to exactly one element each.
 //
 // "Jurisdiction settings" (task instructions: "Admin additionally: link if
-// such page exists") was checked and does not exist anywhere in app/ —
-// not built here, per the instruction to not invent one.
+// such page exists") did not exist when this page was first built — T-W5
+// added the admin console (/admin: readiness, cost tables, jurisdiction
+// settings), linked below for admin only, smallest-diff addition per that
+// task's instructions.
 
 async function isOrdinanceOnFile(jurisdictionId: string, userId: string | null): Promise<boolean> {
   return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
@@ -79,7 +82,7 @@ export default async function HomePage() {
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <div className={styles.header}>
         <p className={styles.eyebrow}>Signed in</p>
         <h1 className={styles.heading}>Welcome, {guarded.email}</h1>
@@ -167,6 +170,16 @@ export default async function HomePage() {
             ) : null}
           </section>
         </>
+      ) : null}
+
+      {guarded.role === "admin" ? (
+        <section className={styles.section} aria-label="Administration">
+          <h2 className={styles.sectionHeading}>Administration</h2>
+          <Link href="/admin" className={styles.secondaryLink}>
+            <span className={styles.secondaryLinkLabel}>Jurisdiction readiness</span>
+            <span className={styles.secondaryLinkMeta}>Cost tables, ordinance citation, appeal window</span>
+          </Link>
+        </section>
       ) : null}
 
       {guarded.role === "viewer" ? (

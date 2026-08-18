@@ -6,6 +6,7 @@ import { getLetterPreview } from "@/modules/a1-letters";
 import type { LetterPreviewResult } from "@/modules/a1-letters";
 import { OrdinanceForm } from "./_components/OrdinanceForm";
 import { IssueLetterAction } from "./_components/IssueLetterAction";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 // A1: determination letters, with an honest, designed refusal state when
@@ -32,7 +33,7 @@ export default async function LetterPage({ params }: { params: Promise<{ clientI
     preview = await getLetterPreview(guarded.jurisdictionId, guarded.userId, clientId);
   } catch {
     return (
-      <main className={styles.main}>
+      <main className={`${styles.main} ${motion.pageEnter}`}>
         <div className={styles.header}>
           <p className={styles.eyebrow}>Determination letter</p>
           <h1 className={styles.heading}>Generate letter</h1>
@@ -50,7 +51,7 @@ export default async function LetterPage({ params }: { params: Promise<{ clientI
   const canEditOrdinance = guarded.role === "admin";
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <div className={styles.header}>
         <p className={styles.eyebrow}>Determination letter</p>
         <h1 className={styles.heading}>Generate letter</h1>

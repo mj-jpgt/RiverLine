@@ -262,10 +262,18 @@
   color: var(--color-text);
   background: var(--color-surface-raised);
   cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
 }
 
 .filterButton:hover {
   background: var(--color-surface);
+}
+
+.filterButton:active {
+  background: var(--color-border);
+  border-color: var(--color-action);
 }
 
 .filterButton:focus-visible,
@@ -278,6 +286,16 @@
   background: var(--color-action);
   border-color: var(--color-action);
   color: var(--color-surface-raised);
+}
+
+.filterButtonActive:hover {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.filterButtonActive:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
 }
 
 .filterButtonDisabled {
@@ -350,10 +368,16 @@
   font-weight: 700;
   color: var(--color-text);
   text-decoration: none;
+  transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
 }
 
 .thLink:hover {
   background: var(--color-border);
+  color: var(--color-surface-raised);
+}
+
+.thLink:active {
+  background: var(--color-action);
   color: var(--color-surface-raised);
 }
 

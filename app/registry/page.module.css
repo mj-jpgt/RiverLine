@@ -132,6 +132,10 @@
   border-radius: var(--radius-md);
   color: var(--color-text);
   text-decoration: none;
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
 }
 
 .resultLink:hover {
@@ -141,6 +145,17 @@
 .resultLink:active {
   background: var(--color-surface);
   border-color: var(--color-action);
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resultLink {
+    transition: none;
+  }
+
+  .resultLink:active {
+    transform: none;
+  }
 }
 
 .resultLink:focus-visible {

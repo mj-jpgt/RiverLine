@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie } from "@/core/auth";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 // The front door. Unauthenticated visitors get a plain, institutional entry
@@ -17,7 +18,7 @@ export default async function LandingPage() {
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <div className={styles.card}>
         {/* h1 is the literal product name — test/e2e/smoke.spec.ts asserts
             getByRole("heading", { name: "RiverLine SDD" }) on this route,

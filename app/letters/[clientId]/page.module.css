@@ -108,6 +108,15 @@
   color: var(--color-action);
   font-weight: 600;
   text-decoration: underline;
+  transition: color var(--motion-fast) var(--motion-ease);
+}
+
+.secondaryLink:hover {
+  color: var(--color-action-hover);
+}
+
+.secondaryLink:active {
+  color: var(--color-action-pressed);
 }
 
 .secondaryLink:focus-visible {
@@ -229,10 +238,15 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease);
 }
 
 .secondaryButton:hover {
   background: var(--color-surface);
+}
+
+.secondaryButton:active {
+  background: var(--color-border);
 }
 
 .secondaryButton:focus-visible {
@@ -292,6 +306,15 @@
   color: var(--color-action);
   font-weight: 600;
   text-decoration: underline;
+  transition: color var(--motion-fast) var(--motion-ease);
+}
+
+.backLink:hover {
+  color: var(--color-action-hover);
+}
+
+.backLink:active {
+  color: var(--color-action-pressed);
 }
 
 .backLink:focus-visible {

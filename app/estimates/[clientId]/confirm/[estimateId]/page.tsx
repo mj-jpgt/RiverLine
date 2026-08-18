@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { getAssessmentEstimatesContext, getEstimateDetail } from "@/modules/a4-estimates";
 import { ConfirmEstimateForm } from "./ConfirmEstimateForm";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "../../../page.module.css";
 
 // The confirmation screen — spec §8's central UI. Server-loads the
@@ -40,7 +41,7 @@ export default async function ConfirmEstimatePage({
 
   if (detail.isConfirmed) {
     return (
-      <main className={styles.main}>
+      <main className={`${styles.main} ${motion.pageEnter}`}>
         <Link href={`/estimates/${encodeURIComponent(clientId)}`} className={styles.backLink}>
           ← Back to estimates
         </Link>
@@ -59,7 +60,7 @@ export default async function ConfirmEstimatePage({
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <Link href={`/estimates/${encodeURIComponent(clientId)}`} className={styles.backLink}>
         ← Back to estimates
       </Link>

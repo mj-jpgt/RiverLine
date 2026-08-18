@@ -17,6 +17,7 @@
    --------------------------------------------------------------------- */
 .banner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
@@ -24,6 +25,27 @@
   font-size: var(--text-sm);
   font-weight: 600;
   border-bottom: 1px solid var(--color-border);
+  /* Fades in on mount rather than an abrupt appear/vanish (direction.md
+     "Smooth, not decorative" #3) — a persistent banner per AGENTS.md rule
+     7, but its arrival/departure is still a state change, not a toast pop.
+     React unmounts it entirely when state === "hidden" (see OfflineBanner
+     .tsx), so only the enter animation is needed. */
+  animation: bannerFadeIn var(--motion-base) var(--motion-ease);
+}
+
+@keyframes bannerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
 }
 
 .bannerOffline {
@@ -243,6 +265,16 @@
   border-radius: var(--radius-md);
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
+  /* The flagship control (damage %, occupancy, foundation, water source):
+     selecting a preset must feel instant AND not strobe when the class
+     swaps optionButton -> optionButtonSelected on the same button element
+     (docs/design/direction.md "Smooth, not decorative" #1 + this pass's
+     item 5). --motion-fast keeps it under the "instant" threshold while
+     removing the hard flash. */
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
 }
 
 .optionButton:active {
@@ -282,6 +314,16 @@
   background: transparent;
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease);
+}
+
+.freeEntryToggle:hover {
+  background: var(--color-surface-raised);
+}
+
+.freeEntryToggle:active {
+  background: var(--color-surface-raised);
+  border-color: var(--color-action);
 }
 
 .freeEntryToggle:focus-visible {
@@ -381,6 +423,11 @@
   background: var(--color-danger);
   border: none;
   border-radius: var(--radius-sm);
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+
+.photoRemoveButton:active {
+  transform: translateY(1px);
 }
 
 .photoRemoveButton:focus-visible {

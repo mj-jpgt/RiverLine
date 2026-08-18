@@ -15,3 +15,28 @@ body {
   font-size: var(--text-base);
   margin: 0;
 }
+
+/* ---------------------------------------------------------------------
+   Global prefers-reduced-motion safety net — V3 motion pass
+   (docs/design/motion.md). Every animation/transition added across every
+   app module.css file and every src/shared/ui module.css file during
+   this pass uses only the --motion-fast/--motion-base tokens, so a single blanket
+   rule here removes all of them for users who asked for reduced motion,
+   without requiring a matching @media block to be hand-duplicated in
+   every module file. The end state (pressed color, selected color, mount
+   opacity/position) is still reachable instantly — only the animated path
+   between states is removed, never the feedback itself (motion.md
+   "prefers-reduced-motion"). !important is deliberate: this is an
+   accessibility override, not a design decision a component should be
+   able to re-enable.
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

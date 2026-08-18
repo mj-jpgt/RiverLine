@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { getAssessmentEstimatesContext } from "@/modules/a4-estimates";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "../page.module.css";
 
 function formatCurrency(value: number): string {
@@ -45,7 +46,7 @@ export default async function AssessmentEstimatesPage({
   if (!context) notFound();
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <Link href="/estimates" className={styles.backLink}>
         ← Back to search
       </Link>

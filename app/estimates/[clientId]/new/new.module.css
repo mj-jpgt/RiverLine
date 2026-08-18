@@ -23,10 +23,15 @@
   border: 1px solid var(--color-action);
   border-radius: var(--radius-md);
   cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease);
 }
 
 .fileButton:hover {
   background: var(--color-action-hover);
+}
+
+.fileButton:active {
+  background: var(--color-action-pressed);
 }
 
 .fileButton:focus-within {
@@ -81,6 +86,11 @@
   background: var(--color-danger);
   border: 2px solid var(--color-surface-raised);
   border-radius: var(--radius-sm);
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+
+.removeThumbButton:active {
+  transform: translateY(1px);
 }
 
 .removeThumbButton:focus-visible {
@@ -133,10 +143,15 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--motion-ease);
 }
 
 .secondaryButton:hover {
   background: var(--color-surface);
+}
+
+.secondaryButton:active {
+  background: var(--color-border);
 }
 
 .secondaryButton:focus-visible {
@@ -249,12 +264,34 @@
   border: 1px solid var(--color-border);
   background: var(--color-surface-raised);
   color: var(--color-text);
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
+}
+
+.pageTab:hover {
+  background: var(--color-surface);
+}
+
+.pageTab:active {
+  background: var(--color-border);
 }
 
 .pageTabSelected {
   background: var(--color-action);
   border-color: var(--color-action);
   color: var(--color-surface-raised);
+}
+
+.pageTabSelected:hover {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.pageTabSelected:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
 }
 
 .pageTab:focus-visible,
@@ -488,6 +525,16 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-danger);
   border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+
+.removeLineButton:hover {
+  background: var(--color-surface);
+}
+
+.removeLineButton:active {
+  background: var(--color-danger);
+  color: var(--color-surface-raised);
 }
 
 .removeLineButton:focus-visible {
@@ -505,6 +552,16 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-action);
   border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+
+.addLineButton:hover {
+  background: var(--color-surface);
+}
+
+.addLineButton:active {
+  background: var(--color-action);
+  color: var(--color-surface-raised);
 }
 
 .addLineButton:focus-visible {

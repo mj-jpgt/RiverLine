@@ -10,6 +10,7 @@ import {
   type StructureValueInfo,
 } from "../_lib/compute";
 import { RecomputeButton } from "./_components/RecomputeButton";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./calculation.module.css";
 
 // The calculation view (M3, T-C4): assessor-facing surface shown after a
@@ -60,7 +61,7 @@ function statusClass(threshold: CalculationView["calculation"]["thresholdResult"
 
 function StructureIncompleteState({ structure }: { structure: StructureValueInfo }) {
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <PageHeader structure={structure} />
       <div className={styles.blockedPanel} role="status">
         <h2 className={styles.blockedHeading}>Structure attributes incomplete</h2>
@@ -78,7 +79,7 @@ function StructureIncompleteState({ structure }: { structure: StructureValueInfo
 
 function NoCostTableState({ structure }: { structure: StructureValueInfo }) {
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <PageHeader structure={structure} />
       <div className={styles.blockedPanel} role="status">
         <h2 className={styles.blockedHeading}>No cost table loaded</h2>
@@ -95,7 +96,7 @@ function NoCostTableState({ structure }: { structure: StructureValueInfo }) {
 
 function NoValueState({ structure }: { structure: StructureValueInfo }) {
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <PageHeader structure={structure} />
       <div className={styles.blockedPanel} role="status">
         <h2 className={styles.blockedHeading}>No value available</h2>
@@ -129,7 +130,7 @@ function CalculationDetail({ view, clientId }: { view: CalculationView; clientId
   const valueSourceLabel = VALUE_SOURCE_LABELS[calculation.valueSource] ?? calculation.valueSource;
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <PageHeader structure={structure} />
 
       {priorCalculationCount > 0 ? (

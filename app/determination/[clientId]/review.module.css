@@ -16,10 +16,15 @@
   font-weight: 600;
   color: var(--color-action);
   text-decoration: none;
+  transition: color var(--motion-fast) var(--motion-ease);
 }
 
 .backLink:hover {
   color: var(--color-action-hover);
+}
+
+.backLink:active {
+  color: var(--color-action-pressed);
 }
 
 .backLink:focus-visible {
@@ -285,6 +290,16 @@
   cursor: pointer;
   min-width: var(--tap-min);
   min-height: var(--tap-min);
+  transition: border-color var(--motion-fast) var(--motion-ease), transform var(--motion-fast) var(--motion-ease);
+}
+
+.photoThumbButton:hover {
+  border-color: var(--color-action);
+}
+
+.photoThumbButton:active {
+  border-color: var(--color-action);
+  transform: translateY(1px);
 }
 
 .photoThumbButton:focus-visible {
@@ -316,6 +331,16 @@
   justify-content: center;
   padding: var(--space-5);
   background: rgba(27, 27, 27, 0.85);
+  animation: lightboxFadeIn var(--motion-base) var(--motion-ease);
+}
+
+@keyframes lightboxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .lightboxContent {
@@ -342,6 +367,15 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--motion-ease);
+}
+
+.lightboxCloseButton:hover {
+  background: var(--color-surface);
+}
+
+.lightboxCloseButton:active {
+  background: var(--color-border);
 }
 
 .lightboxCloseButton:focus-visible {
@@ -361,10 +395,16 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-action);
   border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--motion-ease);
 }
 
 .overrideToggleButton:hover {
   background: var(--color-surface);
+}
+
+.overrideToggleButton:active {
+  background: var(--color-action);
+  color: var(--color-surface-raised);
 }
 
 .overrideToggleButton:focus-visible {
@@ -486,10 +526,15 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--motion-ease);
 }
 
 .overrideCancelButton:hover {
   background: var(--color-surface);
+}
+
+.overrideCancelButton:active {
+  background: var(--color-border);
 }
 
 .overrideCancelButton:focus-visible {
@@ -518,12 +563,34 @@
   border: 1px solid var(--color-border);
   background: var(--color-surface-raised);
   color: var(--color-text);
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
+}
+
+.optionButton:hover {
+  background: var(--color-surface);
+}
+
+.optionButton:active {
+  background: var(--color-border);
 }
 
 .optionButtonSelected {
   background: var(--color-action);
   border-color: var(--color-action);
   color: var(--color-surface-raised);
+}
+
+.optionButtonSelected:hover {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.optionButtonSelected:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
 }
 
 .optionButton:focus-visible,

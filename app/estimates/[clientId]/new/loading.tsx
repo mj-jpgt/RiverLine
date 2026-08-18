@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "@/shared/ui";
 import styles from "../../page.module.css";
 
 export default function NewEstimateLoading() {
@@ -9,6 +10,7 @@ export default function NewEstimateLoading() {
       </div>
       <div className={styles.statePanel} role="status" aria-live="polite">
         <p className={styles.statePanelText}>Loading…</p>
+        <LoadingIndicator />
       </div>
     </main>
   );

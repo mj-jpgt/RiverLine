@@ -1,9 +1,10 @@
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 import { LoginForm } from "./LoginForm";
 
 export default function LoginPage() {
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <div className={styles.card}>
         <p className={styles.eyebrow}>RiverLine SDD</p>
         <h1 className={styles.heading}>Sign in</h1>

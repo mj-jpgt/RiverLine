@@ -261,4 +261,37 @@
      ($font-stack-monospace) */
   --font-data: "Roboto Mono Web", "Bitstream Vera Sans Mono", "Consolas",
     "Courier", monospace;
+
+  /* ------------------------------------------------------------------
+     Motion — ADDITIVE, V3 motion pass (2026-08-18). Not in the enumerated
+     token list in direction.md, added to satisfy direction.md → "Motion"
+     ("under 150ms, no easing theatrics") and the "Smooth, not decorative"
+     section without inventing an ad hoc duration/easing per component.
+     Full mechanical spec: docs/design/motion.md.
+     ------------------------------------------------------------------ */
+
+  /* Discrete, one-shot state changes: pressed states, selected-option
+     swaps, focus color steps. Ceiling is the "immediate" end of
+     direction.md's <150ms budget — chosen, not measured from an external
+     source, to leave headroom under the 150ms hard cap while still reading
+     as instant per ui-review-checklist.md Part B "no dead gap before any
+     visual change". */
+  --motion-fast: 100ms;
+
+  /* Screen-entry / mount fades and directional slides (registry list →
+     detail, determination queue → review). Matches the duration already
+     established as precedent in app/capture/[id]/capture.module.css's
+     .screenEnterForward/.screenEnterBack keyframes and .progressSegment
+     transition (140ms, shipped before this pass) — reused here rather than
+     inventing a second duration for the same category of motion. Still
+     under the 150ms hard cap. */
+  --motion-base: 140ms;
+
+  /* Standard CSS easing keyword, not a custom cubic-bezier — direction.md
+     "Motion" bars "easing theatrics"; a named ease-out (fast start, gentle
+     stop) reads as a state settling into place, which is the only shape
+     used anywhere in this file. Matches the ease-out already used inline
+     in app/capture/[id]/capture.module.css and app/login/page.module.css
+     before this pass. */
+  --motion-ease: ease-out;
 }

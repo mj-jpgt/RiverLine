@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "@/shared/ui";
 import styles from "./page.module.css";
 
 // Automatic Next.js route-segment loading state (server component data
@@ -13,6 +14,7 @@ export default function RegistryLoading() {
       </div>
       <div className={styles.statePanel} role="status" aria-live="polite">
         <p className={styles.statePanelText}>Loading…</p>
+        <LoadingIndicator />
       </div>
     </main>
   );

@@ -1,0 +1,103 @@
+/* Shared motion utilities — V3 motion pass. Mechanical spec:
+   docs/design/motion.md. Tokens only (docs/design/tokens.css). Every rule
+   here is gated behind prefers-reduced-motion; the end state is always
+   reachable instantly with motion removed, never hidden behind it. */
+
+/* ---------------------------------------------------------------------
+   Screen entry — applied to a route's <main> (or an inserted panel) so a
+   navigation reads as moving forward through a sequence rather than an
+   abrupt cut, per direction.md "Smooth, not decorative" #2. Mount-only:
+   Next.js remounts the route segment on every navigation, so this replays
+   automatically without any JS. See motion.md "Directional screen
+   transitions" for why this is a mount animation and not the capture
+   flow's forward/back-aware mechanism.
+   --------------------------------------------------------------------- */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.pageEnter {
+  animation: pageEnter var(--motion-base) var(--motion-ease);
+}
+
+/* ---------------------------------------------------------------------
+   Fade-in — for content that pops in after a loading state resolves
+   (search results, a resolved panel) where a slide would be wrong because
+   the element isn't "arriving from a direction", just appearing.
+   --------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fadeIn {
+  animation: fadeIn var(--motion-base) var(--motion-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageEnter,
+  .fadeIn {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Calm loading indicator — a slow, steady indeterminate bar. Not a
+   one-shot transition (direction.md's "a sync indicator" motion category,
+   see motion.md #4): loops continuously while work is in flight, at a
+   deliberately unhurried ~1.4s cycle so it reads as "in progress", never
+   as alarm. Always rendered with a text label beside it — the bar is
+   never the only signal (ui-review-checklist.md Part B, "no jarring/
+   alarming spinner implying an error when none exists").
+   --------------------------------------------------------------------- */
+.loadingTrack {
+  position: relative;
+  width: 100%;
+  max-width: 12rem;
+  height: 4px;
+  overflow: hidden;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+@keyframes loadingSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.loadingFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: var(--color-action);
+  border-radius: var(--radius-sm);
+  animation: loadingSweep 1.4s var(--motion-ease) infinite;
+}
+
+/* Reduced motion: keep a static, centered bar segment as a calm "working"
+   cue instead of a moving one — still visibly distinct from an empty
+   track, per motion.md's rule that the end state stays reachable/legible
+   with animation removed. */
+@media (prefers-reduced-motion: reduce) {
+  .loadingFill {
+    animation: none;
+    left: 27.5%;
+  }
+}

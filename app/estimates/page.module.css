@@ -118,10 +118,18 @@
   border-radius: var(--radius-md);
   text-decoration: none;
   color: var(--color-text);
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
 }
 
 .resultLink:hover {
   background: var(--color-surface);
+}
+
+.resultLink:active {
+  background: var(--color-surface);
+  border-color: var(--color-action);
 }
 
 .resultLink:focus-visible {
@@ -149,10 +157,15 @@
   font-weight: 600;
   color: var(--color-action);
   text-decoration: none;
+  transition: color var(--motion-fast) var(--motion-ease);
 }
 
 .backLink:hover {
   color: var(--color-action-hover);
+}
+
+.backLink:active {
+  color: var(--color-action-pressed);
 }
 
 .backLink:focus-visible {
@@ -273,10 +286,15 @@
   border: 1px solid var(--color-action);
   border-radius: var(--radius-md);
   text-decoration: none;
+  transition: background-color var(--motion-fast) var(--motion-ease);
 }
 
 .confirmLink:hover {
   background: var(--color-action-hover);
+}
+
+.confirmLink:active {
+  background: var(--color-action-pressed);
 }
 
 .confirmLink:focus-visible {
@@ -300,10 +318,15 @@
   border: 1px solid var(--color-action);
   border-radius: var(--radius-md);
   text-decoration: none;
+  transition: background-color var(--motion-fast) var(--motion-ease);
 }
 
 .newEstimateLink:hover {
   background: var(--color-action-hover);
+}
+
+.newEstimateLink:active {
+  background: var(--color-action-pressed);
 }
 
 .newEstimateLink:focus-visible {

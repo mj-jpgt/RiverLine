@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { getStructureById } from "@/core/registry";
 import { CaptureFlow } from "./CaptureFlow";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 // M2 field capture, offline-first (T-C3). Replaces the T-C2 placeholder.
@@ -33,7 +34,7 @@ export default async function CapturePage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <Link href={`/registry/${id}`} className={styles.backLink}>
         ← Back to structure
       </Link>

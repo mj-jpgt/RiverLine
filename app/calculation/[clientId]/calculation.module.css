@@ -12,10 +12,15 @@
   font-weight: 600;
   color: var(--color-action);
   text-decoration: none;
+  transition: color var(--motion-fast) var(--motion-ease);
 }
 
 .backLink:hover {
   color: var(--color-action-hover);
+}
+
+.backLink:active {
+  color: var(--color-action-pressed);
 }
 
 .backLink:focus-visible {

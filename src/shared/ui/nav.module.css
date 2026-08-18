@@ -25,6 +25,15 @@
   color: var(--color-text);
   text-decoration: none;
   white-space: nowrap;
+  transition: color var(--motion-fast) var(--motion-ease);
+}
+
+.brand:hover {
+  color: var(--color-action);
+}
+
+.brand:active {
+  color: var(--color-action-pressed);
 }
 
 .brand:focus-visible {
@@ -64,6 +73,9 @@
   border-radius: var(--radius-md);
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
 }
 
 .navLink:hover {
@@ -85,6 +97,16 @@
   background: var(--color-action);
   border-color: var(--color-action);
   color: var(--color-surface-raised);
+}
+
+.navLinkActive:hover {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.navLinkActive:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
 }
 
 /* --- Identity: email + role + sign out ---------------------------------- */
@@ -130,6 +152,9 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
 }
 
 .signOutButton:hover {
@@ -162,6 +187,25 @@
   padding: var(--space-2) var(--space-4);
   font-size: var(--text-sm);
   font-weight: 600;
+  /* Fades in on mount instead of an abrupt appear (direction.md "Smooth,
+     not decorative" #3) — SyncStatusIndicator returns null entirely for
+     "hidden", so only the enter needs animating. */
+  animation: syncStripFadeIn var(--motion-base) var(--motion-ease);
+}
+
+@keyframes syncStripFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .syncStrip {
+    animation: none;
+  }
 }
 
 .syncOffline {

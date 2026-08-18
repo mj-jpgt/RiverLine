@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { EstimateUploadFlow } from "./EstimateUploadFlow";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "../../page.module.css";
 
 // Upload + client-side OCR step. Runs entirely client-side
@@ -22,7 +23,7 @@ export default async function NewEstimatePage({ params }: { params: Promise<{ cl
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <Link href={`/estimates/${encodeURIComponent(clientId)}`} className={styles.backLink}>
         ← Back to estimates
       </Link>

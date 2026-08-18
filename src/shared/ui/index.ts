@@ -12,3 +12,5 @@ export { RoleChip } from "./RoleChip";
 export { SignOutButton } from "./SignOutButton";
 export { SyncStatusIndicator } from "./SyncStatusIndicator";
 export type { ShellSyncStatus, SyncStatusIndicatorProps } from "./SyncStatusIndicator";
+export { LoadingIndicator } from "./LoadingIndicator";
+export { EnableTouchActiveStates } from "./EnableTouchActiveStates";

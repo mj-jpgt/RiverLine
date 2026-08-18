@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "@/shared/ui";
 import styles from "./review.module.css";
 
 export default function DeterminationReviewLoading() {
@@ -9,6 +10,7 @@ export default function DeterminationReviewLoading() {
       </div>
       <div className={styles.blockedPanel} role="status" aria-live="polite">
         <p className={styles.blockedText}>Loading the review…</p>
+        <LoadingIndicator />
       </div>
     </main>
   );

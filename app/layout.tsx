@@ -4,6 +4,7 @@ import "./globals.css";
 import { RegisterServiceWorker } from "./register-sw";
 import { AppShell, type ShellSession } from "./AppShell";
 import { SESSION_COOKIE_NAME, verifySessionCookie } from "@/core/auth";
+import { EnableTouchActiveStates } from "@/shared/ui";
 
 export const metadata: Metadata = {
   title: "RiverLine SDD",
@@ -35,6 +36,7 @@ export default async function RootLayout({
     <html lang="en">
       <body>
         <RegisterServiceWorker />
+        <EnableTouchActiveStates />
         <AppShell session={shellSession}>{children}</AppShell>
       </body>
     </html>

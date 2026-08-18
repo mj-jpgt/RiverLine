@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import type { AssessmentListRow } from "@/modules/a4-estimates";
+import { LoadingIndicator } from "@/shared/ui";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 type LoadState = "idle" | "loading" | "loaded" | "error";
@@ -81,6 +83,7 @@ export function EstimatesSearch() {
       {state === "loading" ? (
         <div className={styles.statePanel} role="status" aria-live="polite">
           <p className={styles.statePanelText}>Searching…</p>
+          <LoadingIndicator />
         </div>
       ) : null}
 
@@ -101,7 +104,7 @@ export function EstimatesSearch() {
       ) : null}
 
       {state === "loaded" && results.length > 0 ? (
-        <div>
+        <div className={motion.fadeIn}>
           <p className={styles.resultsHeading}>
             {results.length} assessment{results.length === 1 ? "" : "s"}
           </p>

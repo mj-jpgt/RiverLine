@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { getReviewQueue, filterQueueRows, sortQueueRows } from "@/core/determination";
 import type { QueueStatusFilter, ReviewQueueRow } from "@/core/determination";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 // M4 official review queue (T-C5) — official/admin roles only (role guard
@@ -78,7 +79,7 @@ export default async function DeterminationQueuePage({
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <div className={styles.header}>
         <p className={styles.eyebrow}>Official review</p>
         <h1 className={styles.heading}>Determination queue</h1>

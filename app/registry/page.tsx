@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { RegistrySearch } from "./RegistrySearch";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 // M1 structure registry landing page: address search + "near me". Real
@@ -22,7 +23,7 @@ export default async function RegistryPage() {
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <div className={styles.header}>
         <p className={styles.eyebrow}>Structure registry</p>
         <h1 className={styles.heading}>Find a structure</h1>
