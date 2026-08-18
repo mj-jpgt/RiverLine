@@ -15,8 +15,20 @@ const bodySchema = z.object({ email: z.string().trim().email() });
 // jurisdiction office is plausibly several staff behind one NAT IP; this
 // exists to blunt one IP enumerating many different emails, not to gate
 // normal shared-network use.
-const EMAIL_LIMIT = 5;
-const IP_LIMIT = 20;
+// Test-harness override (integration finding 2026-08-17): the e2e gate
+// suites legitimately log in ~10 times per seeded email inside one window,
+// which the production default correctly blocks. AUTH_RATE_LIMIT_EMAIL /
+// AUTH_RATE_LIMIT_IP raise the caps for those runs (set by scripts/test-*.mjs
+// against dev/test servers only). Unset or invalid → production defaults.
+// Never set these in a production deployment (docs/security-review.md).
+function envLimit(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+const EMAIL_LIMIT = envLimit("AUTH_RATE_LIMIT_EMAIL", 5);
+const IP_LIMIT = envLimit("AUTH_RATE_LIMIT_IP", 20);
 const WINDOW_MS = 15 * 60 * 1000;
 
 export async function POST(request: Request) {

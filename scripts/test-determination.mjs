@@ -48,7 +48,15 @@ if (!baseUrl) {
   process.exit(1);
 }
 const testUrl = withDatabaseName(baseUrl, "riverline_test");
-const testEnv = { ...loadedEnv, DATABASE_URL: testUrl };
+// AUTH_RATE_LIMIT_*: the 13-spec chain logs in ~10x per seeded email in one
+// window; production limits (5/15min) correctly block that. Relaxed here for
+// the riverline_test harness only (see app/api/auth/request-link/route.ts).
+const testEnv = {
+  ...loadedEnv,
+  DATABASE_URL: testUrl,
+  AUTH_RATE_LIMIT_EMAIL: "1000",
+  AUTH_RATE_LIMIT_IP: "1000",
+};
 
 function run(cmd, args, opts = {}) {
   const res = spawnSync(cmd, args, { stdio: "inherit", shell: isWin, env: testEnv, ...opts });
