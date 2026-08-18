@@ -3,9 +3,13 @@
 Read `AGENTS.md` first. It outranks this file. This file outranks your task
 only where they conflict on process; your task defines the work.
 
-You are one of several agents working in isolated git worktrees. You cannot see
-the others and must not try to coordinate with them. Stay inside your assigned
-module directory.
+You are one of several agents that may be working concurrently. In the current
+environment you share ONE working tree (not isolated worktrees — corrected
+2026-08-17 after W1 hit a real `.next` collision): stay strictly inside your
+assigned paths, `git add` only explicit paths, retry briefly on git index.lock,
+never start a server on another agent's port, and treat failures in other
+modules' tests during shared runs as not-yours (your own isolated suites must
+still pass). Do not otherwise coordinate with other agents.
 
 ## Before you write code
 
