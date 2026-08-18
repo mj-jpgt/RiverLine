@@ -1,14 +1,38 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requestMagicLink } from "@/core/auth";
+import { checkRateLimit, clientIp, rateLimitResponse } from "@/shared/security/rate-limit";
 
 const bodySchema = z.object({ email: z.string().trim().email() });
+
+// Rate limits — see docs/security-review.md "Rate limiting" for the full
+// rationale. Per-email: 5 requests / 15 min, matching the task brief's own
+// worked example, adopted here as this route's documented choice (not an
+// invented "industry standard" figure) — magic links are also logged
+// server-side (dev) and this is the account-takeover-adjacent surface
+// (anyone who can trigger unlimited links at an email can spam that inbox).
+// Per-IP: 20 requests / 15 min, looser than per-email because a
+// jurisdiction office is plausibly several staff behind one NAT IP; this
+// exists to blunt one IP enumerating many different emails, not to gate
+// normal shared-network use.
+const EMAIL_LIMIT = 5;
+const IP_LIMIT = 20;
+const WINDOW_MS = 15 * 60 * 1000;
 
 export async function POST(request: Request) {
   const json = await request.json().catch(() => null);
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json({ error: "A valid email address is required." }, { status: 400 });
+  }
+
+  const emailCheck = checkRateLimit(`request-link:email:${parsed.data.email}`, EMAIL_LIMIT, WINDOW_MS);
+  if (!emailCheck.allowed) {
+    return rateLimitResponse(emailCheck, "Too many sign-in requests for this email. Try again later.");
+  }
+  const ipCheck = checkRateLimit(`request-link:ip:${clientIp(request)}`, IP_LIMIT, WINDOW_MS);
+  if (!ipCheck.allowed) {
+    return rateLimitResponse(ipCheck, "Too many sign-in requests from this network. Try again later.");
   }
 
   try {

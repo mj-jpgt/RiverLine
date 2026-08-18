@@ -8,6 +8,8 @@ import type { PoolClient } from "pg";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { withTenant } from "@/shared/db";
 import { mergeScalarFields, resolveElementMerge, type ScalarSnapshot } from "../_lib/merge";
+import { checkRateLimit, rateLimitResponse } from "@/shared/security/rate-limit";
+import { MAX_PHOTO_BYTES, MAX_SYNC_BODY_BYTES, sniffImageType } from "@/shared/security/upload-validation";
 
 // Idempotent sync endpoint for the offline capture flow (src/core/capture/).
 // Keyed on assessments.client_id (schema/core.sql unique constraint) —
@@ -88,6 +90,15 @@ const bodySchema = z.object({
 
 const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
 
+// Looser than the auth routes — field devices legitimately retry with
+// backoff after a dropped connection (this endpoint is designed idempotent
+// specifically for that), and a device catching up after being offline for
+// a while can burst several queued assessments at once. 30/min per acting
+// user bounds a runaway retry loop without capping a real catch-up sync.
+// See docs/security-review.md "Rate limiting".
+const SYNC_LIMIT = 30;
+const SYNC_WINDOW_MS = 60 * 1000;
+
 async function writePhotoFile(jurisdictionId: string, sha256: string, base64: string): Promise<string> {
   const dir = path.join(UPLOADS_ROOT, jurisdictionId);
   await mkdir(dir, { recursive: true });
@@ -108,6 +119,16 @@ export async function POST(request: Request) {
   try {
     const { jurisdictionId, userId } = requireRole(session, ["admin", "assessor", "official"]);
 
+    const syncCheck = checkRateLimit(`sync:user:${userId}`, SYNC_LIMIT, SYNC_WINDOW_MS);
+    if (!syncCheck.allowed) {
+      return rateLimitResponse(syncCheck, "Too many sync requests. It will remain queued and retry.");
+    }
+
+    const contentLength = Number(request.headers.get("content-length") ?? "0");
+    if (contentLength > MAX_SYNC_BODY_BYTES) {
+      return NextResponse.json({ error: "Sync payload is too large." }, { status: 413 });
+    }
+
     const json = await request.json().catch(() => null);
     const parsed = bodySchema.safeParse(json);
     if (!parsed.success) {
@@ -124,6 +145,27 @@ export async function POST(request: Request) {
     // batch rather than silently accepting a mismatched photo.
     for (const photo of body.photos) {
       const bytes = Buffer.from(photo.dataBase64, "base64");
+
+      if (bytes.length > MAX_PHOTO_BYTES) {
+        return NextResponse.json(
+          { error: `Photo ${photo.id} exceeds the ${MAX_PHOTO_BYTES} byte limit.` },
+          { status: 413 },
+        );
+      }
+
+      // Content-type allowlist enforced by signature, not the client's
+      // claim: bodySchema only accepts contentType: "image/jpeg" (a
+      // request-shape check), but that field is attacker-controlled text —
+      // the actual bytes are what gets written to disk and served back.
+      // OWASP File Upload Cheat Sheet (retrieved 2026-08-17): validate file
+      // signatures, don't trust Content-Type.
+      if (sniffImageType(bytes) !== "jpeg") {
+        return NextResponse.json(
+          { error: `Photo ${photo.id} is not a valid JPEG — refusing to store unverified bytes.` },
+          { status: 400 },
+        );
+      }
+
       const actualSha256 = createHash("sha256").update(bytes).digest("hex");
       if (actualSha256 !== photo.sha256.toLowerCase()) {
         return NextResponse.json(
