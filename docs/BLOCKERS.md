@@ -73,25 +73,41 @@ Record the answer in `docs/data-contracts/hamilton-county-parcels.md` under
 
 ---
 
-## B4 — Choose a transactional email provider for magic-link delivery (blocks production M0 auth)
+## B4 — CODE READY — needs a provider API key (blocks production M0 auth)
 
-**Why it is blocked:** `src/core/auth/magic-link.ts` implements the full
-allowlist → single-use-token → verify flow, and in dev the link is logged
-server-side and served from a dev-only route
+**Status (2026-08-18, T-V2): code ready — needs provider API key.** The
+provider decision, ADR, and full implementation are done:
+`docs/adr/0009-email-transport.md` compares Postmark, Resend, and AWS SES
+and recommends **Postmark** (plain HTTPS JSON API, no new npm dependency —
+AGENTS.md rule 3 satisfied by construction, not by exception).
+`src/core/auth/email-transport.ts` implements a driver-selected transport
+(`EMAIL_DRIVER=dev|http|none`) with a tested Postmark payload builder
+(`test/unit/auth/email-transport.test.ts`); `magic-link.ts` now calls it
+instead of inlining the throw. **The only missing piece is a real Postmark
+Server Token** — this cannot be fabricated or worked around; see
+`.env.example` for the exact env vars and where the key comes from.
+
+**What still needs a human:**
+1. Create/access a Postmark account for the jurisdiction (or confirm via
+   whoever owns the jurisdiction's IT/email policy that Postmark is
+   acceptable — a `.gov` domain may have constraints on third-party mail
+   relays; ADR 0009's "Consequences" section covers switching providers if
+   not).
+2. Verify the sending domain in Postmark (DKIM DNS records) so mail
+   reliably lands in inboxes rather than spam.
+3. Set `EMAIL_DRIVER=http`, `EMAIL_API_URL`, `EMAIL_API_KEY` (the Postmark
+   Server Token from step 1), `EMAIL_FROM`, and `APP_BASE_URL` (must be
+   `https://` in production) in the production environment.
+
+Until then, production `requestMagicLink()` continues to throw a clear,
+loud error (`EMAIL_DRIVER` unset defaults to `"none"` in production) —
+never a fake send, never a silent no-op.
+
+**Original context (why this was blocked):** `src/core/auth/magic-link.ts`
+implements the full allowlist → single-use-token → verify flow, and in dev
+the link is logged server-side and served from a dev-only route
 (`app/api/dev/magic-link/route.ts`) — see
-`docs/journal/2026-08-17-c1-auth-db.md`. There is no email transport wired
-for `NODE_ENV === 'production'`: sending real mail needs a chosen provider
-(e.g. an SMTP relay, SES, Postmark, Resend), credentials, and — per
-AGENTS.md rule 3 — an ADR before adding any new dependency for it. Rather
-than fabricate a fake send or silently no-op, `requestMagicLink()` throws a
-clear, loud error in production until this is resolved, the same pattern
-the constitution uses for the ordinance-citation and cost-table gaps.
-
-**Steps:**
-1. Pick a provider (ask whoever owns the jurisdiction's IT/email policy —
-   a `.gov` domain may have constraints on third-party mail relays).
-2. Write an ADR recording the choice and the new dependency.
-3. Implement the production branch of `requestMagicLink()` against it.
+`docs/journal/2026-08-17-c1-auth-db.md`.
 
 ---
 

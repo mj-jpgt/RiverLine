@@ -4,7 +4,7 @@
 // use hashed token, 15-minute expiry.
 import { withSystem } from "@/shared/db";
 import { generateOpaqueToken, hashToken } from "./crypto";
-import { setDevMagicLink } from "./dev-link-store";
+import { sendMagicLinkEmail } from "./email-transport";
 import type { Role } from "./session";
 
 const TOKEN_TTL_MINUTES = 15;
@@ -67,22 +67,13 @@ export async function requestMagicLink(emailRaw: string): Promise<{ requested: t
 
   const verifyPath = `/api/auth/verify?token=${encodeURIComponent(token)}`;
 
-  if (process.env.NODE_ENV === "production") {
-    // No email transport is wired up: sending real mail requires a chosen
-    // provider, credentials, and an ADR (AGENTS.md rule 3) — none of which
-    // exist yet. Refuse loudly rather than pretending to send, matching the
-    // constitution's pattern for the other two known gaps (ordinance
-    // citation, cost tables): an explicit blocked state, never a fake
-    // action. See docs/BLOCKERS.md B4.
-    throw new Error(
-      "Production email transport is not configured — see docs/BLOCKERS.md B4 (magic-link email delivery).",
-    );
-  }
-
-  // Dev transport: log server-side only, and stash it for the dev-only
-  // retrieval route (src/core/auth's getDevMagicLink / app/api/dev/magic-link).
-  console.log(`[dev-auth] magic link for ${email}: ${verifyPath}`);
-  setDevMagicLink(email, verifyPath, expiresAt);
+  // Delivery goes through the driver-selected transport (dev log+store /
+  // real HTTP send via a provider API / loud throw when unconfigured) — see
+  // src/core/auth/email-transport.ts and docs/adr/0009-email-transport.md.
+  // This throws in production until EMAIL_DRIVER=http is configured with a
+  // provider (docs/BLOCKERS.md B4); the pre-existing dev behavior (console
+  // log + dev-only retrieval route) is unchanged in shape.
+  await sendMagicLinkEmail({ email, verifyPath, expiresAt });
 
   return { requested: true };
 }
