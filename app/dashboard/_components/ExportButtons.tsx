@@ -65,6 +65,29 @@ export function ExportCsvButton({ queryString }: { queryString: string }) {
   );
 }
 
+export function OperationalSummaryCsvButton() {
+  const { state, download } = useDownload("/dashboard/export/operational-summary", "operational-summary.csv");
+
+  return (
+    <div className={styles.exportControl}>
+      <button
+        type="button"
+        className={styles.exportButtonOutline}
+        onClick={download}
+        disabled={state === "loading"}
+        aria-describedby={state === "error" ? "export-operational-summary-error" : undefined}
+      >
+        {state === "loading" ? "Preparing export…" : "Operational summary (CSV)"}
+      </button>
+      {state === "error" ? (
+        <p id="export-operational-summary-error" className={styles.exportError} role="alert">
+          Could not generate the operational summary. Try again.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function FullExportButton() {
   const { state, download } = useDownload("/dashboard/export/full", "records-request-export.zip");
 

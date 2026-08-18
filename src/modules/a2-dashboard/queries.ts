@@ -16,6 +16,9 @@ import type {
   DeterminationStatus,
   DeterminationStatusCounts,
   ExportTable,
+  OccupancyBandCounts,
+  OperationalSummary,
+  RepairCostTotals,
   SortDirection,
 } from "./types";
 
@@ -38,7 +41,8 @@ const LATEST_STATE_CTE = `
   latest_calc as (
     select distinct on (c.assessment_id)
       c.id, c.assessment_id, c.ratio, c.threshold_result,
-      c.market_value_used, c.value_source, c.cost_table_version
+      c.market_value_used, c.value_source, c.cost_table_version,
+      c.total_repair_cost
     from calculations c
     order by c.assessment_id, c.computed_at desc
   ),
@@ -245,6 +249,107 @@ export async function getDashboardCounts(jurisdictionId: string, userId: string 
     };
 
     return { byDeterminationStatus, byCalculationBand, totalStructures };
+  });
+}
+
+// --- Operational summary (V5 task 3) -----------------------------------
+//
+// "The jurisdiction operational picture" — the numbers an EMA/county would
+// actually ask for during an event (damage-category totals by occupancy,
+// total computed repair-cost exposure, count of ADOPTED SD determinations
+// specifically, not merely computed-SD). Built on the same LATEST_STATE_CTE
+// every other query in this file uses, so "latest" means the same thing
+// everywhere: one row per structure, its latest completed assessment's
+// latest calculation and latest determination.
+
+function toNullableNumber(value: unknown): number | null {
+  return value === null || value === undefined ? null : Number(value);
+}
+
+function toOccupancyBandCounts(rows: Record<string, unknown>[]): OccupancyBandCounts {
+  const bucket = (occupancy: "residential" | "non_residential" | "unknown"): CalculationBandCounts => {
+    const row = rows.find((r) => r.occupancy === occupancy);
+    return {
+      SD: row ? Number(row.sd) : 0,
+      BORDERLINE: row ? Number(row.borderline) : 0,
+      NOT_SD: row ? Number(row.not_sd) : 0,
+      noCalculation: row ? Number(row.no_calc) : 0,
+    };
+  };
+  return {
+    residential: bucket("residential"),
+    nonResidential: bucket("non_residential"),
+    unknownOccupancy: bucket("unknown"),
+  };
+}
+
+export async function getOperationalSummary(jurisdictionId: string, userId: string | null): Promise<OperationalSummary> {
+  return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
+    const totalRes = await client.query(`select count(*)::int as n from structures`);
+    const totalStructures = totalRes.rows[0].n as number;
+
+    const statusRes = await client.query(
+      `${LATEST_STATE_CTE}
+       select
+         count(*) filter (where ld.status = 'draft')::int as draft,
+         count(*) filter (where ld.status = 'adopted')::int as adopted,
+         count(*) filter (where ld.status = 'contested')::int as contested,
+         count(*) filter (where ld.status = 'superseded')::int as superseded,
+         count(*) filter (where ld.status is null)::int as none,
+         count(*) filter (where ld.status = 'adopted' and lc.threshold_result = 'SD')::int as adopted_sd
+       ${LATEST_STATE_JOIN}`,
+    );
+    const s = statusRes.rows[0];
+    const byDeterminationStatus: DeterminationStatusCounts = {
+      draft: s.draft as number,
+      adopted: s.adopted as number,
+      contested: s.contested as number,
+      superseded: s.superseded as number,
+      none: s.none as number,
+    };
+    const adoptedSdCount = s.adopted_sd as number;
+
+    const bandRes = await client.query(
+      `${LATEST_STATE_CTE}
+       select
+         count(*) filter (where lc.threshold_result = 'SD')::int as sd,
+         count(*) filter (where lc.threshold_result = 'BORDERLINE')::int as borderline,
+         count(*) filter (where lc.threshold_result = 'NOT_SD')::int as not_sd,
+         count(*) filter (where lc.threshold_result is null)::int as no_calc,
+         sum(lc.total_repair_cost) filter (where lc.threshold_result = 'SD') as cost_sd,
+         sum(lc.total_repair_cost) filter (where lc.threshold_result = 'BORDERLINE') as cost_borderline,
+         sum(lc.total_repair_cost) filter (where lc.threshold_result = 'NOT_SD') as cost_not_sd,
+         sum(lc.total_repair_cost) as cost_total
+       ${LATEST_STATE_JOIN}`,
+    );
+    const b = bandRes.rows[0];
+    const byCalculationBand: CalculationBandCounts = {
+      SD: b.sd as number,
+      BORDERLINE: b.borderline as number,
+      NOT_SD: b.not_sd as number,
+      noCalculation: b.no_calc as number,
+    };
+    const totalComputedRepairCost: RepairCostTotals = {
+      total: toNullableNumber(b.cost_total),
+      SD: toNullableNumber(b.cost_sd),
+      BORDERLINE: toNullableNumber(b.cost_borderline),
+      NOT_SD: toNullableNumber(b.cost_not_sd),
+    };
+
+    const occupancyRes = await client.query(
+      `${LATEST_STATE_CTE}
+       select
+         coalesce(s.occupancy_type, 'unknown') as occupancy,
+         count(*) filter (where lc.threshold_result = 'SD')::int as sd,
+         count(*) filter (where lc.threshold_result = 'BORDERLINE')::int as borderline,
+         count(*) filter (where lc.threshold_result = 'NOT_SD')::int as not_sd,
+         count(*) filter (where lc.threshold_result is null)::int as no_calc
+       ${LATEST_STATE_JOIN}
+       group by coalesce(s.occupancy_type, 'unknown')`,
+    );
+    const byOccupancyAndBand = toOccupancyBandCounts(occupancyRes.rows);
+
+    return { totalStructures, byDeterminationStatus, byCalculationBand, byOccupancyAndBand, totalComputedRepairCost, adoptedSdCount };
   });
 }
 

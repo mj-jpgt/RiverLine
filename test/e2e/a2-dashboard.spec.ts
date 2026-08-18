@@ -195,6 +195,39 @@ test.describe("T-A2 administrator dashboard", () => {
     await expect(borderlineRow).toContainText("2");
   });
 
+  test("operational picture: adopted-SD count and residential damage-category breakdown match a direct db query", async ({
+    page,
+    request,
+    baseURL,
+  }) => {
+    await loginViaDevMagicLink(page, request, baseURL, OFFICIAL_EMAIL);
+    await page.goto("/dashboard");
+
+    // "10 SD Adopted St" is the only adopted+SD row this suite seeded — the
+    // stat must count ADOPTED substantial damage specifically, not just
+    // every SD calculation (the borderline/not-SD rows here are never
+    // adopted at all, so this also proves the stat isn't just "adopted
+    // count").
+    const dbAdoptedSd = await admin.query(
+      `select count(*)::int as n
+       from determinations d join calculations c on c.id = d.calculation_id
+       where d.jurisdiction_id = $1 and d.status = 'adopted' and c.threshold_result = 'SD'`,
+      [jurisdictionId],
+    );
+    expect(dbAdoptedSd.rows[0].n).toBe(1);
+
+    const adoptedSdRow = page.locator("dt", { hasText: "Adopted substantial damage" }).first().locator("..");
+    await expect(adoptedSdRow).toContainText(String(dbAdoptedSd.rows[0].n));
+
+    // All five seeded structures are residential — the residential
+    // damage-category group must show the same borderline count (2) the
+    // status-overview section already proved above.
+    const residentialGroup = page
+      .locator(`h2:has-text("Residential — by damage category")`)
+      .locator("..");
+    await expect(residentialGroup.locator("dt", { hasText: "Borderline" }).first().locator("..")).toContainText("2");
+  });
+
   test("filter to BORDERLINE: table rows match db count", async ({ page, request, baseURL }) => {
     await loginViaDevMagicLink(page, request, baseURL, OFFICIAL_EMAIL);
     await page.goto("/dashboard");
@@ -271,6 +304,40 @@ test.describe("T-A2 administrator dashboard", () => {
     expect(sdRow[8]).toBe(dbRow.rows[0].cost_table_version);
   });
 
+  test("operational summary CSV downloads and its adopted-SD row matches the db", async ({ page, request, baseURL }) => {
+    await loginViaDevMagicLink(page, request, baseURL, OFFICIAL_EMAIL);
+    await page.goto("/dashboard");
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Operational summary (CSV)" }).click();
+    const download = await downloadPromise;
+
+    const stream = await download.createReadStream();
+    expect(stream).not.toBeNull();
+    const chunks: Buffer[] = [];
+    await new Promise<void>((resolve, reject) => {
+      stream!.on("data", (c) => chunks.push(Buffer.from(c)));
+      stream!.on("end", () => resolve());
+      stream!.on("error", reject);
+    });
+    const csvText = Buffer.concat(chunks).toString("utf8");
+    const table = parseCsv(csvText);
+
+    expect(table[0]).toEqual(["metric", "value"]);
+    const asRecord = Object.fromEntries(table.slice(1).map((r) => [r[0], r[1]]));
+
+    const dbAdoptedSd = await admin.query(
+      `select count(*)::int as n
+       from determinations d join calculations c on c.id = d.calculation_id
+       where d.jurisdiction_id = $1 and d.status = 'adopted' and c.threshold_result = 'SD'`,
+      [jurisdictionId],
+    );
+    expect(asRecord.adopted_substantial_damage_count).toBe(String(dbAdoptedSd.rows[0].n));
+
+    const dbTotal = await admin.query(`select count(*)::int as n from structures where jurisdiction_id = $1`, [jurisdictionId]);
+    expect(asRecord.total_structures).toBe(String(dbTotal.rows[0].n));
+  });
+
   test("full export (records request) downloads a real ZIP file", async ({ page, request, baseURL }) => {
     await loginViaDevMagicLink(page, request, baseURL, OFFICIAL_EMAIL);
     await page.goto("/dashboard");
@@ -309,6 +376,9 @@ test.describe("T-A2 administrator dashboard", () => {
 
     const csvRes = await context.request.get("/dashboard/export/csv");
     expect(csvRes.status()).toBe(403);
+
+    const opsSummaryRes = await context.request.get("/dashboard/export/operational-summary");
+    expect(opsSummaryRes.status()).toBe(403);
 
     await context.close();
   });

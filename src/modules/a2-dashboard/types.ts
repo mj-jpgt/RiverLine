@@ -94,3 +94,46 @@ export interface ExportTable {
   columns: string[];
   rows: Record<string, unknown>[];
 }
+
+// --- Operational summary (V5 task 3) ---------------------------------
+//
+// "The numbers an EMA/county would actually ask for during an event": the
+// existing status/band counts (above) plus a damage-category cross-break by
+// occupancy type, total computed repair-cost exposure, and how many SD
+// determinations are actually ADOPTED (not merely calculated) — the
+// difference matters because "computed SD" is a proposal and "adopted SD"
+// is the official's actual decision of record (AGENTS.md rule 12: the
+// system proposes, the official adopts).
+
+export type Occupancy = "residential" | "non_residential" | "unknown";
+
+/** Same shape as CalculationBandCounts, reused per occupancy bucket so an
+ * EMA can see "how many residential vs. non-residential structures, and at
+ * what severity" — the two FEMA program tracks (Individual Assistance vs.
+ * Public Assistance) split along exactly this line. */
+export interface OccupancyBandCounts {
+  residential: CalculationBandCounts;
+  nonResidential: CalculationBandCounts;
+  unknownOccupancy: CalculationBandCounts;
+}
+
+/** Sum of `calculations.total_repair_cost` (latest calculation per
+ * structure), in dollars, broken out by band. `null` when no calculation in
+ * that band exists yet — never a fabricated 0 standing in for "no data",
+ * per specs/constitution.md's "explicit runtime states, not filled in"
+ * pattern used throughout this project. */
+export interface RepairCostTotals {
+  total: number | null;
+  SD: number | null;
+  BORDERLINE: number | null;
+  NOT_SD: number | null;
+}
+
+export interface OperationalSummary {
+  totalStructures: number;
+  byDeterminationStatus: DeterminationStatusCounts;
+  byCalculationBand: CalculationBandCounts;
+  byOccupancyAndBand: OccupancyBandCounts;
+  totalComputedRepairCost: RepairCostTotals;
+  adoptedSdCount: number;
+}

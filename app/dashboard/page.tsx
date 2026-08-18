@@ -5,6 +5,7 @@ import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from
 import {
   getDashboardCounts,
   getCaseload,
+  getOperationalSummary,
   resolveStatusFilter,
   resolveBandFilter,
   resolveIsoDate,
@@ -16,7 +17,8 @@ import {
   determinationStatusLabel,
 } from "@/modules/a2-dashboard";
 import type { CaseloadSortColumn, SortDirection, BandFilter, StatusFilter } from "@/modules/a2-dashboard";
-import { ExportCsvButton, FullExportButton } from "./_components/ExportButtons";
+import { ExportCsvButton, FullExportButton, OperationalSummaryCsvButton } from "./_components/ExportButtons";
+import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 // A2 administrator dashboard (T-A2): status overview (by determination
@@ -133,20 +135,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   let counts;
   let caseload;
+  let operationalSummary;
   let loadError: string | null = null;
   try {
-    [counts, caseload] = await Promise.all([
+    [counts, caseload, operationalSummary] = await Promise.all([
       getDashboardCounts(guarded.jurisdictionId, guarded.userId),
       getCaseload(guarded.jurisdictionId, guarded.userId, filters, sortColumn, direction, page, pageSize),
+      getOperationalSummary(guarded.jurisdictionId, guarded.userId),
     ]);
   } catch {
     loadError = "Could not load the dashboard. Try reloading the page.";
   }
 
+  const usd = (n: number | null) => (n === null ? "—" : n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }));
+
   const totalPages = caseload ? Math.max(1, Math.ceil(caseload.totalCount / caseload.pageSize)) : 1;
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${motion.pageEnter}`}>
       <div className={styles.header}>
         <p className={styles.eyebrow}>Administrator dashboard</p>
         <h1 className={styles.heading}>Jurisdiction caseload</h1>
@@ -253,9 +259,100 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </div>
           </section>
 
+          {/* --- Operational picture: the numbers an EMA/county would ask
+              for during an event (V5 task 3) — damage category (occupancy
+              x band) cross-break, computed repair-cost exposure, and
+              ADOPTED substantial-damage count specifically (a decision of
+              record, not merely a computed proposal — AGENTS.md rule 12).
+              Same text-forward stat-row treatment as the status overview
+              above, never icon cards (docs/design/components.md §4.2). --- */}
+          <section className={styles.statsGrid} aria-label="Jurisdiction operational picture">
+            <div className={styles.statsGroup}>
+              <h2 className={styles.statsGroupHeading}>Residential — by damage category</h2>
+              <dl className={styles.statsList}>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeSd}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Substantial damage
+                  </dt>
+                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.residential.SD}</dd>
+                </div>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeBorderline}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Borderline
+                  </dt>
+                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.residential.BORDERLINE}</dd>
+                </div>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeNotSd}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Not substantial damage
+                  </dt>
+                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.residential.NOT_SD}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className={styles.statsGroup}>
+              <h2 className={styles.statsGroupHeading}>Non-residential — by damage category</h2>
+              <dl className={styles.statsList}>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeSd}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Substantial damage
+                  </dt>
+                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.nonResidential.SD}</dd>
+                </div>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeBorderline}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Borderline
+                  </dt>
+                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.nonResidential.BORDERLINE}</dd>
+                </div>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeNotSd}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Not substantial damage
+                  </dt>
+                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.nonResidential.NOT_SD}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className={styles.statsGroup}>
+              <h2 className={styles.statsGroupHeading}>Repair cost &amp; adoption</h2>
+              <dl className={styles.statsList}>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeMuted}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Computed repair cost (all bands)
+                  </dt>
+                  <dd className={styles.statCount}>{usd(operationalSummary!.totalComputedRepairCost.total)}</dd>
+                </div>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeSd}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Repair cost — substantial damage
+                  </dt>
+                  <dd className={styles.statCount}>{usd(operationalSummary!.totalComputedRepairCost.SD)}</dd>
+                </div>
+                <div className={styles.statsRow}>
+                  <dt className={styles.statusBadgeNotSd}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    Adopted substantial damage
+                  </dt>
+                  <dd className={styles.statCount}>{operationalSummary!.adoptedSdCount}</dd>
+                </div>
+              </dl>
+            </div>
+          </section>
+
           {/* --- Export --- */}
           <div className={styles.exportRow}>
             <ExportCsvButton queryString={exportQueryString()} />
+            <OperationalSummaryCsvButton />
             <FullExportButton />
           </div>
 

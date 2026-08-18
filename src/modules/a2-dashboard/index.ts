@@ -1,7 +1,7 @@
 // Public entry point for src/modules/a2-dashboard — the only path app/ (or
 // a different module family) may import through, per eslint-plugin-boundaries
 // (docs/adr/0003-module-boundary-enforcement.md).
-export { getCaseload, getCaseloadForExport, getDashboardCounts, getFullExportTables } from "./queries";
+export { getCaseload, getCaseloadForExport, getDashboardCounts, getFullExportTables, getOperationalSummary } from "./queries";
 export {
   SORT_COLUMN_SQL,
   isSortColumn,
@@ -36,5 +36,9 @@ export type {
   CaseloadFilters,
   CaseloadQuery,
   ExportTable,
+  Occupancy,
+  OccupancyBandCounts,
+  RepairCostTotals,
+  OperationalSummary,
 } from "./types";
 export type { ZipEntry } from "./zip";
