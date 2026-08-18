@@ -1,0 +1,25 @@
+# RiverLine SDD — production Caddy config (docker-compose.prod.yml).
+# Build spec §2.8: "Vercel or a single VPS with Caddy for automatic HTTPS.
+# HTTPS is non-negotiable: iOS will not grant camera or geolocation
+# permissions to insecure origins."
+#
+# {$SITE_ADDRESS} is set via the `SITE_ADDRESS` env var
+# (.env.production.example). Caddy's automatic HTTPS already does the right
+# thing for both cases with zero extra directives:
+#   - A real public hostname (e.g. flood.noblesville.example.gov) ->
+#     Caddy requests a real certificate from Let's Encrypt automatically on
+#     first request. Requires ports 80+443 reachable from the internet for
+#     the ACME HTTP-01 challenge.
+#   - "localhost" (the default, used for local/self-host testing without a
+#     public domain) -> not a publicly resolvable/ACME-eligible name, so
+#     Caddy transparently falls back to its own internal CA and serves a
+#     self-signed certificate instead. Real HTTPS, just not
+#     browser-trusted without importing Caddy's local root CA — fine for
+#     the docker-compose prove-out documented in docs/deploy/self-host.md,
+#     wrong for a real pilot jurisdiction (set SITE_ADDRESS to the real
+#     domain there).
+{$SITE_ADDRESS:localhost} {
+	encode gzip
+
+	reverse_proxy app:3000
+}

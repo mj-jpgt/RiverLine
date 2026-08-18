@@ -1,0 +1,110 @@
+# RiverLine SDD — production stack (self-host deployment).
+# See docs/deploy/self-host.md for prerequisites, first boot, backup/
+# restore, and upgrade/rollback procedures. This file is the actual thing
+# that doc's commands run against — every command in the doc was run
+# against this file for real.
+#
+# Three services: postgres+postgis (db), the Next.js app (app, built from
+# ./Dockerfile), and Caddy for automatic HTTPS (caddy, build spec §2.8).
+# Migrations run on every app boot via docker-entrypoint.sh (idempotent,
+# advisory-locked — see scripts/db/migrate.mjs).
+#
+# Configure via a real `.env.production` file (never committed — see
+# .env.production.example for the full variable table and how to generate
+# SESSION_SECRET). `docker compose -f docker-compose.prod.yml up -d` reads
+# `.env.production` automatically only if you pass `--env-file
+# .env.production` (compose's implicit `.env` lookup is a different,
+# dev-oriented file) — the self-host doc's commands do this explicitly.
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-riverline}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-riverline} -d ${POSTGRES_DB:-riverline}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # No host port published by default — only the app and (via db, for an
+    # operator's own psql/pg_dump) the docker network can reach it. Override
+    # with a `ports:` block locally if you need direct host access; the
+    # self-host doc's prove-out does this explicitly on an alternate port.
+
+  app:
+    # `image:` + `build:` together (spec §11.1 "tag every deploy; keep the
+    # previous version one command away"): `docker compose ... up -d --build`
+    # builds and tags this image as riverline-sdd:${IMAGE_TAG}; a plain
+    # `up -d` (no --build) reuses whatever is already tagged. Set IMAGE_TAG
+    # to a real version (git sha, date, semver) per deploy instead of the
+    # floating `latest` default, and see docs/deploy/self-host.md → "Upgrade
+    # and rollback" for the exact commands this enables.
+    image: riverline-sdd:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-riverline}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required — see .env.production.example for the generation command}
+    volumes:
+      - uploads:/app/uploads
+    healthcheck:
+      # No curl/wget in the node:22-bookworm-slim runner image (deliberately
+      # not installed — smaller attack surface). A one-line Node http check
+      # against the public /login page (no auth, no DB write) is the boring
+      # equivalent: asserts the Next.js server is actually accepting HTTP
+      # requests and serving a real page, not just that the process exists.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/login', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    healthcheck:
+      # caddy:2-alpine is Alpine-based and ships busybox wget, unlike the
+      # app image — use it directly rather than adding a dependency.
+      # --no-check-certificate: the local/self-host-default case terminates
+      # TLS with Caddy's own internal (self-signed) CA, which wget would
+      # otherwise reject.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--no-check-certificate", "--spider", "https://localhost/login"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

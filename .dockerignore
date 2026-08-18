@@ -1,0 +1,51 @@
+# Build-context exclusions for the production image (Dockerfile).
+# Keep this in sync with .gitignore's intent, plus dev/test-only material
+# that has no business in a production image or its build context.
+
+node_modules
+.next
+.git
+.gitignore
+
+# Test / lint / dev tooling — not needed to build or run the app.
+test
+test-results
+playwright-report
+*.tsbuildinfo
+coverage
+
+# Docs, specs, ADRs, journals — informational, not runtime... EXCEPT
+# docs/design/tokens.css, which app/globals.css actually @imports at build
+# time (`@import "../docs/design/tokens.css";`) — excluding all of docs/
+# broke `next build` inside the image (verified: real docker build failure,
+# "Can't resolve '../docs/design/tokens.css'"). Exclude everything else in
+# docs/ individually instead of the whole directory.
+docs/adr
+docs/agents
+docs/BLOCKERS.md
+docs/data-contracts
+docs/deploy
+docs/journal
+docs/riverline-sdd-build-spec.md
+docs/testing
+docs/design/direction.md
+docs/design/components.md
+docs/design/ui-review-checklist.md
+specs
+agents
+
+# Real data / secrets / generated artifacts — never belong in an image.
+data
+backups
+uploads
+.env
+.env.*
+!.env.production.example
+
+# OS / editor cruft.
+.DS_Store
+Thumbs.db
+
+# Preprocessing (Python, offline-only per AGENTS.md — never in the serving
+# path, so never in the production image).
+scripts/preprocess
