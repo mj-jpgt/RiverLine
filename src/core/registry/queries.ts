@@ -8,15 +8,35 @@
 // test/unit/db/rls.test.ts (T-C1) proves for other tables.
 import type { PoolClient } from "pg";
 import { withTenant } from "@/shared/db";
+import { buildEnrichmentSuggestions, fetchCountyParcelRecord } from "./hamco-source";
 import type {
+  EnrichableField,
+  EnrichmentAcceptedFields,
+  EnrichmentResult,
+  ManualStructureInput,
   OccupancyType,
   RegistryNearbyResult,
   RegistrySearchResult,
   RegistryStructureDetail,
 } from "./types";
 
+// Sentinel prefix written into structures.notes for hand-created records
+// (the "Structure not found?" manual path, F1 registry task) — a fixed,
+// grep-able marker rather than free-text sniffing, so isManualEntry
+// detection below is exact, not a guess. See migrations/0006_structures_notes.sql
+// for why `notes` (not a new value_source enum member) carries this.
+const MANUAL_ENTRY_MARKER = "[UNVERIFIED MANUAL ENTRY]";
+// PARCELNO in the source data is always a 16-digit numeric string
+// (hamilton-county-parcels.md); this prefix can never collide with a real
+// one, so it doubles as a visible "no county parcel number" signal in the UI.
+const MANUAL_PARCEL_PREFIX = "MANUAL-";
+
 function toOccupancyType(value: unknown): OccupancyType | null {
   return value === "residential" || value === "non_residential" ? value : null;
+}
+
+function isManualEntry(notes: unknown): boolean {
+  return typeof notes === "string" && notes.startsWith(MANUAL_ENTRY_MARKER);
 }
 
 function toSearchResult(row: Record<string, unknown>): RegistrySearchResult {
@@ -26,6 +46,9 @@ function toSearchResult(row: Record<string, unknown>): RegistrySearchResult {
     address: row.address as string,
     occupancyType: toOccupancyType(row.occupancy_type),
     sfhaZone: (row.sfha_zone as string | null) ?? null,
+    propClass: (row.prop_class as string | null) ?? null,
+    improvementValue: row.improvement_value === null ? null : Number(row.improvement_value),
+    isManualEntry: isManualEntry(row.notes),
   };
 }
 
@@ -63,6 +86,7 @@ function toDetail(row: Record<string, unknown>): RegistryStructureDetail {
     yearBuilt: row.year_built === null ? null : Number(row.year_built),
     propClass: (row.prop_class as string | null) ?? null,
     createdAt: toIsoTimestamp(row.created_at),
+    isManualEntry: isManualEntry(row.notes),
   };
 }
 
@@ -83,7 +107,7 @@ export async function searchStructuresByAddress(
 
   return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
     const { rows } = await client.query(
-      `select id, parcel_id, address, occupancy_type, sfha_zone
+      `select id, parcel_id, address, occupancy_type, sfha_zone, prop_class, improvement_value, notes
        from structures
        where address ilike '%' || $1 || '%'
        order by length(address), address
@@ -111,7 +135,7 @@ export async function nearestStructures(
 ): Promise<RegistryNearbyResult[]> {
   return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
     const { rows } = await client.query(
-      `select id, parcel_id, address, occupancy_type, sfha_zone,
+      `select id, parcel_id, address, occupancy_type, sfha_zone, prop_class, improvement_value, notes,
               ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) as distance_m
        from structures
        where geom is not null
@@ -167,5 +191,160 @@ export async function setOccupancyType(
     ]);
     if (existing.rows.length === 0) return { ok: false as const, reason: "not_found" as const };
     return { ok: false as const, reason: "already_set" as const };
+  });
+}
+
+// --- Enrichment (autofill from the county record) --------------------------
+
+/**
+ * Fetches the live county parcel record for this structure's PARCELNO and
+ * returns editable suggestions for whichever tracked fields are currently
+ * NULL. Read-only — no DB write. Never throws: a county-service failure
+ * (network, timeout, parcel not found — see hamco-source.ts) comes back as
+ * `{ available: false, suggestions: [] }`, the "degrade silently to manual
+ * entry" behavior the task requires.
+ */
+export async function getEnrichmentSuggestions(
+  jurisdictionId: string,
+  userId: string | null,
+  structureId: string,
+): Promise<EnrichmentResult | { notFound: true }> {
+  return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
+    const { rows } = await client.query(
+      `select parcel_id, improvement_value, sq_ft, year_built, stories, occupancy_type, prop_class
+       from structures where id = $1`,
+      [structureId],
+    );
+    if (rows.length === 0) return { notFound: true as const };
+    const row = rows[0];
+
+    const record = await fetchCountyParcelRecord(row.parcel_id as string);
+    if (!record) {
+      return { available: false, fetchedAt: null, suggestions: [] };
+    }
+
+    const fetchedAt = new Date().toISOString();
+    const suggestions = buildEnrichmentSuggestions(
+      {
+        improvementValue: row.improvement_value === null ? null : Number(row.improvement_value),
+        sqFt: row.sq_ft === null ? null : Number(row.sq_ft),
+        yearBuilt: row.year_built === null ? null : Number(row.year_built),
+        stories: row.stories === null ? null : Number(row.stories),
+        occupancyType: toOccupancyType(row.occupancy_type),
+        propClass: (row.prop_class as string | null) ?? null,
+      },
+      record,
+      fetchedAt,
+    );
+    return { available: true, fetchedAt, suggestions };
+  });
+}
+
+const ENRICHABLE_COLUMNS: Record<EnrichableField, string> = {
+  improvementValue: "improvement_value",
+  sqFt: "sq_ft",
+  yearBuilt: "year_built",
+  stories: "stories",
+  occupancyType: "occupancy_type",
+  propClass: "prop_class",
+};
+
+/**
+ * Writes assessor-accepted enrichment suggestions. Each field is applied
+ * only if the column is STILL null at write time (`column is null` guard in
+ * the UPDATE) — defense in depth against a race with a manual edit that
+ * happened between the suggestion being shown and being accepted; this is
+ * the actual enforcement of "never overwrite an existing user-entered value
+ * automatically." Every applied field gets its own audit_log row
+ * (entity_type 'structure', action 'enrichment_accepted') carrying
+ * before/after value + source + fetch date — this is the field-level
+ * provenance record; structures itself has no free-form per-field
+ * provenance column and none was added (AGENTS.md rule 1 — audit_log
+ * already exists and is the schema-supported place for this).
+ */
+export async function applyEnrichment(
+  jurisdictionId: string,
+  userId: string | null,
+  structureId: string,
+  accepted: EnrichmentAcceptedFields,
+  sourceLabel: string,
+): Promise<{ ok: true; applied: EnrichableField[]; skipped: EnrichableField[]; structure: RegistryStructureDetail } | { ok: false; reason: "not_found" }> {
+  return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
+    const applied: EnrichableField[] = [];
+    const skipped: EnrichableField[] = [];
+
+    for (const [field, value] of Object.entries(accepted) as [EnrichableField, string | number][]) {
+      const column = ENRICHABLE_COLUMNS[field];
+      if (!column) continue;
+      const { rows } = await client.query(
+        `update structures set ${column} = $1
+         where id = $2 and ${column} is null
+         returning ${column}`,
+        [value, structureId],
+      );
+      if (rows.length > 0) {
+        applied.push(field);
+        await client.query(
+          `insert into audit_log (actor_user_id, jurisdiction_id, entity_type, entity_id, action, before_json, after_json)
+           values ($1, $2, 'structure', $3, 'enrichment_accepted', $4, $5)`,
+          [
+            userId,
+            jurisdictionId,
+            structureId,
+            JSON.stringify({ field, value: null }),
+            JSON.stringify({ field, value, source: sourceLabel }),
+          ],
+        );
+      } else {
+        skipped.push(field);
+      }
+    }
+
+    const { rows: finalRows } = await client.query("select * from structures where id = $1", [structureId]);
+    if (finalRows.length === 0) return { ok: false as const, reason: "not_found" as const };
+    return { ok: true as const, applied, skipped, structure: toDetail(finalRows[0]) };
+  });
+}
+
+// --- Manual structure creation ("Structure not found?" path) ---------------
+
+/**
+ * Hand-creates a structure row when the assessor cannot find the parcel in
+ * the county ingest (coverage gap — see docs/journal/2026-08-18-f1-registry.md
+ * "Coverage"). address is required; parcelId is optional (a synthetic
+ * MANUAL-<random> id is generated when omitted, which can never collide
+ * with a real 16-digit PARCELNO). Always flagged via the notes sentinel
+ * (MANUAL_ENTRY_MARKER) so every surface that reads this row (search
+ * results, detail page, future calc/review screens) can render it as
+ * unverified. value_source is required NOT NULL by the frozen schema and
+ * has no enum member for "no source yet, hand-entered" — 'official_override'
+ * is the closest existing meaning ("a human, not an automated feed, is
+ * asserting this record") and is reused here rather than inventing a new
+ * enum value; documented as a judgment call in the journal, not a guess.
+ */
+export async function createManualStructure(
+  jurisdictionId: string,
+  userId: string | null,
+  input: ManualStructureInput,
+): Promise<RegistryStructureDetail> {
+  return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
+    const parcelId = input.parcelId?.trim() || `${MANUAL_PARCEL_PREFIX}${crypto.randomUUID().slice(0, 12)}`;
+    const notes = `${MANUAL_ENTRY_MARKER} Created by field assessor; parcel not found in the county parcel registry. Address and any attributes are as reported by the assessor, not sourced from an authoritative record.`;
+
+    const { rows } = await client.query(
+      `insert into structures (
+         jurisdiction_id, parcel_id, address, value_source, occupancy_type, notes
+       ) values ($1, $2, $3, 'official_override', $4, $5)
+       returning *`,
+      [jurisdictionId, parcelId, input.address.trim(), input.occupancyType, notes],
+    );
+
+    await client.query(
+      `insert into audit_log (actor_user_id, jurisdiction_id, entity_type, entity_id, action, before_json, after_json)
+       values ($1, $2, 'structure', $3, 'manual_create', null, $4)`,
+      [userId, jurisdictionId, rows[0].id, JSON.stringify({ address: input.address, parcelId })],
+    );
+
+    return toDetail(rows[0]);
   });
 }

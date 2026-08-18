@@ -32,18 +32,52 @@
 // services accept inSR=4326 on an esriGeometryEnvelope filter and return
 // outSR=4326 coordinates, so no projection math is needed in this script).
 //
+// FULL-COUNTY MODE (F1 registry coverage task, 2026-08-18)
+// ---------------------------------------------------------------------
+// The original envelope above (~3,821 parcels) was always a deliberate
+// starting subset, not full coverage (see build-spec target range note
+// below) — the field report this task responds to is exactly that: a real
+// flooded address outside the Noblesville envelope has no structure row at
+// all. Pass `--full` (or set INGEST_MODE=full) to ingest the WHOLE county
+// (153,883 parcels per hamilton-county-parcels.md's verified count) instead
+// of the bbox. Full mode:
+//   - Parcels: pages with `where=1=1` (no geometry filter at all — every
+//     parcel in the county, not just ones inside an envelope), same
+//     resultOffset paging as bbox mode.
+//   - NFHL zones/panels: paged too (bbox mode's single-request assumption
+//     doesn't hold county-wide — verified live 2026-08-18: 4,670 zone
+//     features, 89 panel features for DFIRM_ID='18057C' with no geometry
+//     filter, both need paging against the service's maxRecordCount 2000).
+//   - DB writes: batched multi-row INSERT...ON CONFLICT per fetched page
+//     (up to PAGE_SIZE rows per statement) instead of one round-trip per
+//     row — the row-at-a-time loop bbox mode used is fine for ~3,800 rows
+//     but far too slow (network round-trips) for 153,883.
+// RESUMABILITY / CHECKPOINTING: each page's raw JSON response is cached to
+// disk (parcels/ and nfhl/ under data/raw/ingest/, namespaced by mode — see
+// cacheDir below) BEFORE it is parsed, so an interrupted run (the 10-minute
+// foreground command cap) that is re-invoked skips every already-fetched
+// page for free and resumes paging from the first missing one. The DB
+// upsert loop is separately idempotent (ON CONFLICT...DO UPDATE, same as
+// bbox mode) so re-running it from the top after an interruption is always
+// safe, just re-writes already-loaded pages once more — batching keeps that
+// cost small. This combination (cache-based fetch resume + idempotent
+// batched upsert) is the "checkpoint via resultOffset, re-runnable" the
+// task calls for, without a separate progress-tracking table or file that
+// could itself drift from what's actually committed to the database.
+//
 // PIPELINE
 // ---------------------------------------------------------------------
-// 1. Page the parcel FeatureServer (Layer 0) across the envelope, with
-//    resultOffset paging, a polite delay between pages, and retry-with-
-//    backoff on transient failures. Each page's raw JSON response is cached
-//    under data/raw/ingest/parcels/ (gitignored via data/raw/ — see
-//    .gitignore) so a re-run with the cache present needs no network call.
-// 2. Fetch NFHL Layer 28 (Flood Hazard Zones) and Layer 3 (FIRM Panels) for
-//    the same envelope, filtered to Hamilton County via DFIRM_ID='18057C'
-//    (verified county identifier, fema-nfhl.md). Both are small enough
-//    (146 zones / 4 panels observed for this bbox) to fetch in one request
-//    each; also cached to data/raw/ingest/nfhl/.
+// 1. Page the parcel FeatureServer (Layer 0) — across the Noblesville
+//    envelope in the default mode, or the whole county in --full mode —
+//    with resultOffset paging, a polite delay between pages, and retry-
+//    with-backoff on transient failures. Each page's raw JSON response is
+//    cached under data/raw/ingest/parcels[_full]/ (gitignored via data/raw/
+//    — see .gitignore) so a re-run with the cache present needs no network
+//    call for that page.
+// 2. Fetch NFHL Layer 28 (Flood Hazard Zones) and Layer 3 (FIRM Panels),
+//    filtered to Hamilton County via DFIRM_ID='18057C' (verified county
+//    identifier, fema-nfhl.md), and additionally by the same envelope in
+//    bbox mode. Paged the same way as parcels; cached to data/raw/ingest/nfhl[_full]/.
 // 3. For each parcel, compute an area-weighted centroid of its outer ring
 //    (shoelace-formula polygon centroid — no new dependency) and run a
 //    point-in-polygon test (even-odd rule across all rings, which handles
@@ -86,6 +120,7 @@
 // the as-of date; this is a labeling convention for an already-real number,
 // not a fabricated adjustment.
 
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -93,7 +128,14 @@ import pg from "pg";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../..");
-const cacheDir = path.join(repoRoot, "data/raw/ingest");
+
+// --full (or INGEST_MODE=full) switches every fetch below from the
+// Noblesville envelope to the whole county — see "FULL-COUNTY MODE" header
+// comment. Each mode gets its own cache subdirectory so a bbox-mode cache
+// (still used by test/e2e/registry.spec.ts's real-address fixture
+// expectations) is never confused with a full-county one.
+const FULL_MODE = process.argv.includes("--full") || process.env.INGEST_MODE === "full";
+const cacheDir = path.join(repoRoot, "data/raw/ingest", FULL_MODE ? "_full" : ".");
 
 const PARCELS_URL =
   "https://gis1.hamiltoncounty.in.gov/arcgis/rest/services/HamCoParcelsPublic/FeatureServer/0/query";
@@ -102,13 +144,15 @@ const NFHL_PANELS_URL = "https://hazards.fema.gov/arcgis/rest/services/public/NF
 const DFIRM_ID = "18057C"; // Hamilton County, IN — verified fema-nfhl.md
 
 // WGS84 lon/lat envelope around downtown Noblesville / the White River
-// corridor — see header comment above for how this was chosen.
+// corridor — see header comment above for how this was chosen. Only used
+// when FULL_MODE is false.
 const BBOX = "-86.03,40.03,-85.99,40.06";
 
 const PAGE_SIZE = 1000; // well under maxRecordCount 2000 (hamilton-county-parcels.md)
 const PAGE_DELAY_MS = 350; // polite delay between pages
 const MAX_RETRIES = 4;
 const RETRY_BASE_MS = 500;
+const DB_BATCH_SIZE = 500; // rows per multi-row upsert statement in full mode
 
 const PARCEL_OUT_FIELDS = [
   "PARCELNO",
@@ -164,13 +208,49 @@ function writeCache(file, data) {
 }
 
 /**
- * Pages the parcel FeatureServer across BBOX, offline-capable via the
- * per-page disk cache. Returns the concatenated `features` array.
+ * DB-write checkpoint, separate from the per-page fetch cache above. The
+ * fetch cache alone makes a re-run skip network calls for already-fetched
+ * pages, but every re-run still redid every earlier page's point-in-polygon
+ * work and DB upsert from page 0 before reaching new pages — for
+ * --full mode's ~154 pages that made each successive 10-minute foreground
+ * invocation net LESS new progress than the last (quadratic re-work),
+ * observed live 2026-08-18 (a second full-county run made zero net
+ * progress past ~60,000 loaded rows in a full 10-minute window). This
+ * checkpoint records the highest page offset whose DB upsert has actually
+ * committed, keyed by a hash of the target DATABASE_URL (local dev and live
+ * Supabase are different databases with independent progress) so a re-run
+ * against the SAME database skips straight to the first un-upserted page.
  */
-async function fetchAllParcels() {
-  const features = [];
+function checkpointFile(connectionString) {
+  const dbLabel = createHash("sha256").update(connectionString).digest("hex").slice(0, 12);
+  return path.join(cacheDir, `upsert_checkpoint_${dbLabel}.json`);
+}
+
+function readCheckpoint(connectionString) {
+  const data = readCache(checkpointFile(connectionString));
+  return data?.lastCompletedOffset ?? -1;
+}
+
+function writeCheckpoint(connectionString, offset) {
+  writeCache(checkpointFile(connectionString), { lastCompletedOffset: offset, updatedAt: new Date().toISOString() });
+}
+
+/**
+ * Pages the parcel FeatureServer — the BBOX envelope in default mode, the
+ * whole county (`where=1=1`, no geometry filter) in --full mode — calling
+ * `onPage(features, { offset, page })` once per page as soon as it is
+ * available, rather than accumulating every feature in memory first. For
+ * --full mode's ~154 pages of full polygon geometry that matters (avoids
+ * holding the whole county's ring geometry in memory at once); it is a
+ * harmless no-op difference for bbox mode's 4 pages. Each page is cached to
+ * disk before onPage runs, so a re-run after an interruption (10-minute
+ * foreground cap) skips every already-fetched page and resumes paging from
+ * the first missing offset — the "checkpoint via resultOffset" behavior.
+ */
+async function fetchParcelsPaged(onPage) {
   let offset = 0;
   let page = 0;
+  let total = 0;
 
   while (true) {
     const cacheFile = path.join(cacheDir, "parcels", `page_${offset}.json`);
@@ -179,21 +259,93 @@ async function fetchAllParcels() {
     if (json) {
       console.log(`  page ${page} (offset ${offset}): cached (${json.features.length} features)`);
     } else {
-      const params = {
-        geometry: BBOX,
-        geometryType: "esriGeometryEnvelope",
-        inSR: "4326",
-        spatialRel: "esriSpatialRelIntersects",
-        outFields: PARCEL_OUT_FIELDS,
-        returnGeometry: "true",
-        outSR: "4326",
-        resultOffset: String(offset),
-        resultRecordCount: String(PAGE_SIZE),
-        f: "json",
-      };
+      const params = FULL_MODE
+        ? {
+            where: "1=1",
+            outFields: PARCEL_OUT_FIELDS,
+            returnGeometry: "true",
+            outSR: "4326",
+            resultOffset: String(offset),
+            resultRecordCount: String(PAGE_SIZE),
+            f: "json",
+          }
+        : {
+            geometry: BBOX,
+            geometryType: "esriGeometryEnvelope",
+            inSR: "4326",
+            spatialRel: "esriSpatialRelIntersects",
+            outFields: PARCEL_OUT_FIELDS,
+            returnGeometry: "true",
+            outSR: "4326",
+            resultOffset: String(offset),
+            resultRecordCount: String(PAGE_SIZE),
+            f: "json",
+          };
       json = await fetchJsonWithRetry(PARCELS_URL, params);
       writeCache(cacheFile, json);
       console.log(`  page ${page} (offset ${offset}): fetched (${json.features.length} features)`);
+      await sleep(PAGE_DELAY_MS);
+    }
+
+    total += json.features.length;
+    await onPage(json.features, { offset, page });
+
+    const exceeded = json.exceededTransferLimit === true;
+    if (json.features.length < PAGE_SIZE && !exceeded) break;
+    offset += json.features.length;
+    page += 1;
+    if (json.features.length === 0) break;
+  }
+
+  return total;
+}
+
+/**
+ * Pages an NFHL layer (zones/panels), filtered to Hamilton County via
+ * DFIRM_ID and, in bbox mode, the same envelope parcels use. Full-county
+ * mode needs real paging here too — verified live 2026-08-18: 4,670 zone
+ * features / 89 panel features county-wide vs. maxRecordCount 2000, where
+ * bbox mode's original single-request assumption (146 zones / 4 panels for
+ * that small envelope) held.
+ */
+async function fetchNfhlLayer(url, cacheName) {
+  const features = [];
+  let offset = 0;
+  let page = 0;
+
+  while (true) {
+    const cacheFile = path.join(cacheDir, "nfhl", cacheName.replace(".json", ""), `page_${offset}.json`);
+    let json = readCache(cacheFile);
+
+    if (json) {
+      console.log(`  ${cacheName} page ${page} (offset ${offset}): cached (${json.features.length} features)`);
+    } else {
+      const params = FULL_MODE
+        ? {
+            where: `DFIRM_ID='${DFIRM_ID}'`,
+            outFields: "*",
+            returnGeometry: "true",
+            outSR: "4326",
+            resultOffset: String(offset),
+            resultRecordCount: String(PAGE_SIZE),
+            f: "json",
+          }
+        : {
+            where: `DFIRM_ID='${DFIRM_ID}'`,
+            geometry: BBOX,
+            geometryType: "esriGeometryEnvelope",
+            inSR: "4326",
+            spatialRel: "esriSpatialRelIntersects",
+            outFields: "*",
+            returnGeometry: "true",
+            outSR: "4326",
+            resultOffset: String(offset),
+            resultRecordCount: String(PAGE_SIZE),
+            f: "json",
+          };
+      json = await fetchJsonWithRetry(url, params);
+      writeCache(cacheFile, json);
+      console.log(`  ${cacheName} page ${page} (offset ${offset}): fetched (${json.features.length} features)`);
       await sleep(PAGE_DELAY_MS);
     }
 
@@ -208,30 +360,6 @@ async function fetchAllParcels() {
   return features;
 }
 
-async function fetchNfhlLayer(url, cacheName) {
-  const cacheFile = path.join(cacheDir, "nfhl", cacheName);
-  const cached = readCache(cacheFile);
-  if (cached) {
-    console.log(`  ${cacheName}: cached (${cached.features.length} features)`);
-    return cached.features;
-  }
-  const params = {
-    where: `DFIRM_ID='${DFIRM_ID}'`,
-    geometry: BBOX,
-    geometryType: "esriGeometryEnvelope",
-    inSR: "4326",
-    spatialRel: "esriSpatialRelIntersects",
-    outFields: "*",
-    returnGeometry: "true",
-    outSR: "4326",
-    f: "json",
-  };
-  const json = await fetchJsonWithRetry(url, params);
-  writeCache(cacheFile, json);
-  console.log(`  ${cacheName}: fetched (${json.features.length} features)`);
-  await sleep(PAGE_DELAY_MS);
-  return json.features;
-}
 
 // ---------------------------------------------------------------------
 // Geometry helpers — plain JS, no new dependency.
@@ -296,8 +424,47 @@ function pointInEsriPolygon(point, esriPolygon) {
   return inside;
 }
 
+/** Cheap axis-aligned bounding box for a feature's rings, computed once and
+ * cached on the feature object. findContaining() below rejects a feature on
+ * a bbox miss before paying for the full ray-casting test — full-county
+ * mode point-in-polygon-tests every parcel against every NFHL zone (4,670
+ * features county-wide, verified live 2026-08-18, vs. 146 for the original
+ * Noblesville bbox), so this pre-filter is the difference between a run
+ * that finishes and one that doesn't: without it this step is O(parcels x
+ * zones x ring vertices), observed to make a 150k-parcel run stall for
+ * multiple 10-minute foreground windows without completing one page's
+ * worth of extra progress.
+ */
+function featureBbox(feature) {
+  if (feature.__bbox !== undefined) return feature.__bbox;
+  const rings = feature.geometry?.rings;
+  if (!rings || rings.length === 0) {
+    feature.__bbox = null;
+    return null;
+  }
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const ring of rings) {
+    for (const [x, y] of ring) {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  feature.__bbox = [minX, minY, maxX, maxY];
+  return feature.__bbox;
+}
+
 function findContaining(point, features, attrField) {
+  const [px, py] = point;
   for (const feature of features) {
+    const bbox = featureBbox(feature);
+    if (!bbox) continue;
+    const [minX, minY, maxX, maxY] = bbox;
+    if (px < minX || px > maxX || py < minY || py > maxY) continue; // cheap reject
     if (pointInEsriPolygon(point, feature.geometry)) {
       return feature.attributes[attrField] ?? null;
     }
@@ -361,16 +528,67 @@ function pickSqFt(occupancyType, sqFtRes, sqFtComm) {
   return sqFtRes ?? sqFtComm ?? null;
 }
 
+const STRUCTURE_COLUMNS = [
+  "jurisdiction_id",
+  "parcel_id",
+  "address",
+  "geom_lng",
+  "geom_lat",
+  "improvement_value",
+  "value_as_of_date",
+  "sfha_zone",
+  "firm_panel",
+  "occupancy_type",
+  "stories",
+  "sq_ft",
+  "year_built",
+  "prop_class",
+];
+
+/** Builds one multi-row `insert ... on conflict do update` statement for up
+ * to DB_BATCH_SIZE rows at a time — see "FULL-COUNTY MODE" header comment
+ * for why row-at-a-time (bbox mode's original approach) doesn't scale to
+ * 153,883 rows. `geom` is computed inline per row from the geom_lng/geom_lat
+ * placeholder pair since ST_MakePoint isn't expressible as a plain VALUES
+ * literal. */
+function buildUpsertStatement(rowCount) {
+  const cols = STRUCTURE_COLUMNS.length;
+  const valueTuples = [];
+  for (let r = 0; r < rowCount; r++) {
+    const base = r * cols;
+    const p = (i) => `$${base + i + 1}`;
+    valueTuples.push(
+      `(${p(0)}, ${p(1)}, ${p(2)}, case when ${p(3)}::double precision is null then null else ST_SetSRID(ST_MakePoint(${p(3)}, ${p(4)}), 4326) end, null, ${p(5)}, 'assessed_improvement', ${p(6)}, ${p(7)}, ${p(8)}, ${p(9)}, ${p(10)}, ${p(11)}, ${p(12)}, ${p(13)})`,
+    );
+  }
+  return `
+    insert into structures (
+      jurisdiction_id, parcel_id, address, geom,
+      assessor_market_value, improvement_value, value_source, value_as_of_date,
+      sfha_zone, firm_panel, occupancy_type, stories, sq_ft, year_built, prop_class
+    ) values ${valueTuples.join(",\n")}
+    on conflict (jurisdiction_id, parcel_id) do update set
+      address = excluded.address,
+      geom = excluded.geom,
+      improvement_value = excluded.improvement_value,
+      value_source = excluded.value_source,
+      value_as_of_date = excluded.value_as_of_date,
+      sfha_zone = excluded.sfha_zone,
+      firm_panel = excluded.firm_panel,
+      occupancy_type = coalesce(structures.occupancy_type, excluded.occupancy_type),
+      stories = excluded.stories,
+      sq_ft = excluded.sq_ft,
+      year_built = excluded.year_built,
+      prop_class = excluded.prop_class
+    returning (xmax = 0) as inserted`;
+}
+
 async function main() {
-  console.log(`Envelope: ${BBOX} (WGS84 lon/lat) — see script header for derivation.`);
-
-  console.log("\nFetching parcels (Hamilton County FeatureServer, Layer 0) ...");
-  const parcelFeatures = await fetchAllParcels();
-  console.log(`Total parcel features fetched: ${parcelFeatures.length}`);
-
-  console.log("\nFetching NFHL layers (FEMA hazards.fema.gov) ...");
-  const zoneFeatures = await fetchNfhlLayer(NFHL_ZONES_URL, "zones.json");
-  const panelFeatures = await fetchNfhlLayer(NFHL_PANELS_URL, "panels.json");
+  console.log(
+    FULL_MODE
+      ? "Mode: FULL COUNTY (--full) — no geometry filter, all 153,883 parcels."
+      : `Mode: bbox ${BBOX} (WGS84 lon/lat) — see script header for derivation. Pass --full for the whole county.`,
+  );
 
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
@@ -378,17 +596,15 @@ async function main() {
     process.exit(1);
   }
 
+  console.log("\nFetching NFHL layers (FEMA hazards.fema.gov) ...");
+  const zoneFeatures = await fetchNfhlLayer(NFHL_ZONES_URL, "zones");
+  const panelFeatures = await fetchNfhlLayer(NFHL_PANELS_URL, "panels");
+  console.log(`NFHL zones: ${zoneFeatures.length}, panels: ${panelFeatures.length}`);
+
   const client = new pg.Client({ connectionString });
   await client.connect();
 
-  let inserted = 0;
-  let updated = 0;
-  let skippedNoParcelId = 0;
-  let skippedNoAddress = 0;
-  let occupancyNullCount = 0;
-  let sfhaAssignedCount = 0;
-  const sampleAddresses = [];
-
+  let jurisdictionId;
   try {
     const jurisdictionResult = await client.query(
       "select id from jurisdictions where name = $1",
@@ -400,74 +616,74 @@ async function main() {
       );
       process.exit(1);
     }
-    const jurisdictionId = jurisdictionResult.rows[0].id;
+    jurisdictionId = jurisdictionResult.rows[0].id;
     console.log(`\nLoading into jurisdiction Demo City (${jurisdictionId}) ...`);
 
-    for (const feature of parcelFeatures) {
-      const attrs = feature.attributes;
-      const parcelId = attrs.PARCELNO;
-      const address = attrs.LOCADDRESS;
+    let totalFetched = 0;
+    let inserted = 0;
+    let updated = 0;
+    let skippedNoParcelId = 0;
+    let skippedNoAddress = 0;
+    let occupancyNullCount = 0;
+    let sfhaAssignedCount = 0;
+    const sampleAddresses = [];
 
-      if (!parcelId) {
-        skippedNoParcelId += 1;
-        continue;
+    const resumeFromOffset = readCheckpoint(connectionString);
+    if (resumeFromOffset >= 0) {
+      console.log(
+        `\nResuming: DB upsert checkpoint found, skipping pages already committed up through offset ${resumeFromOffset}.`,
+      );
+    }
+
+    console.log("\nFetching + loading parcels (Hamilton County FeatureServer, Layer 0) ...");
+
+    await fetchParcelsPaged(async (features, { page, offset }) => {
+      totalFetched += features.length;
+
+      if (offset <= resumeFromOffset) {
+        console.log(`  page ${page} (offset ${offset}): already committed (checkpoint), skipping DB work`);
+        return;
       }
-      if (!address) {
-        skippedNoAddress += 1;
-        continue;
-      }
 
-      const point = representativePoint(feature.geometry);
-      let sfhaZone = null;
-      let firmPanel = null;
-      if (point) {
-        sfhaZone = findContaining(point, zoneFeatures, "FLD_ZONE");
-        firmPanel = findContaining(point, panelFeatures, "FIRM_PAN");
-        if (sfhaZone !== null) sfhaAssignedCount += 1;
-      }
+      const rows = [];
 
-      const occupancyType = mapOccupancyType(attrs.PROPCLASS);
-      if (occupancyType === null) occupancyNullCount += 1;
+      for (const feature of features) {
+        const attrs = feature.attributes;
+        const parcelId = attrs.PARCELNO;
+        const address = attrs.LOCADDRESS;
 
-      const stories = parseStories(attrs.num_floors);
-      const sqFt = pickSqFt(occupancyType, attrs.sq_ft_res, attrs.sq_ft_comm);
+        if (!parcelId) {
+          skippedNoParcelId += 1;
+          continue;
+        }
+        if (!address) {
+          skippedNoAddress += 1;
+          continue;
+        }
 
-      const improvementValue = typeof attrs.AVIMPROVE === "number" ? attrs.AVIMPROVE : null;
-      const valueAsOfDate =
-        typeof attrs.AVTAXYR === "number" ? `${attrs.AVTAXYR}-01-01` : null;
+        const point = representativePoint(feature.geometry);
+        let sfhaZone = null;
+        let firmPanel = null;
+        if (point) {
+          sfhaZone = findContaining(point, zoneFeatures, "FLD_ZONE");
+          firmPanel = findContaining(point, panelFeatures, "FIRM_PAN");
+          if (sfhaZone !== null) sfhaAssignedCount += 1;
+        }
 
-      const geomParams = point ? [point[0], point[1]] : [null, null];
+        const occupancyType = mapOccupancyType(attrs.PROPCLASS);
+        if (occupancyType === null) occupancyNullCount += 1;
 
-      const result = await client.query(
-        `insert into structures (
-           jurisdiction_id, parcel_id, address, geom,
-           assessor_market_value, improvement_value, value_source, value_as_of_date,
-           sfha_zone, firm_panel, occupancy_type, stories, sq_ft, year_built, prop_class
-         ) values (
-           $1, $2, $3, case when $4::double precision is null then null else ST_SetSRID(ST_MakePoint($4, $5), 4326) end,
-           null, $6, 'assessed_improvement', $7,
-           $8, $9, $10, $11, $12, $13, $14
-         )
-         on conflict (jurisdiction_id, parcel_id) do update set
-           address = excluded.address,
-           geom = excluded.geom,
-           improvement_value = excluded.improvement_value,
-           value_source = excluded.value_source,
-           value_as_of_date = excluded.value_as_of_date,
-           sfha_zone = excluded.sfha_zone,
-           firm_panel = excluded.firm_panel,
-           occupancy_type = coalesce(structures.occupancy_type, excluded.occupancy_type),
-           stories = excluded.stories,
-           sq_ft = excluded.sq_ft,
-           year_built = excluded.year_built,
-           prop_class = excluded.prop_class
-         returning (xmax = 0) as inserted`,
-        [
+        const stories = parseStories(attrs.num_floors);
+        const sqFt = pickSqFt(occupancyType, attrs.sq_ft_res, attrs.sq_ft_comm);
+        const improvementValue = typeof attrs.AVIMPROVE === "number" ? attrs.AVIMPROVE : null;
+        const valueAsOfDate = typeof attrs.AVTAXYR === "number" ? `${attrs.AVTAXYR}-01-01` : null;
+
+        rows.push([
           jurisdictionId,
           parcelId,
           address,
-          geomParams[0],
-          geomParams[1],
+          point ? point[0] : null,
+          point ? point[1] : null,
           improvementValue,
           valueAsOfDate,
           sfhaZone,
@@ -477,30 +693,66 @@ async function main() {
           sqFt,
           attrs.year_built ?? null,
           attrs.PROPCLASS ?? null,
-        ],
-      );
+        ]);
 
-      if (result.rows[0]?.inserted) {
-        inserted += 1;
-      } else {
-        updated += 1;
+        if (sampleAddresses.length < 3) sampleAddresses.push(address);
       }
-      if (sampleAddresses.length < 3) sampleAddresses.push(address);
-    }
+
+      // A single multi-row `ON CONFLICT DO UPDATE` statement errors
+      // ("cannot affect row a second time") if two VALUES rows share a
+      // conflict target — and the live county service does occasionally
+      // return the same PARCELNO twice within one 1000-row page (observed
+      // live 2026-08-18, full-county run, around offset 38000). De-dupe by
+      // parcel_id within each batch before upserting, keeping the LAST
+      // occurrence (same "last write wins" semantics ON CONFLICT DO UPDATE
+      // itself would give across separate statements) — this is a batching
+      // artifact fix, not a change to what data ends up stored.
+      const dedupedByParcelId = new Map();
+      for (const row of rows) {
+        dedupedByParcelId.set(row[1], row); // row[1] = parcel_id
+      }
+      const dedupedRows = [...dedupedByParcelId.values()];
+      const duplicatesInPage = rows.length - dedupedRows.length;
+      if (duplicatesInPage > 0) {
+        console.log(`  page ${page}: ${duplicatesInPage} duplicate PARCELNO within this page, kept last occurrence`);
+      }
+
+      // Upsert in DB_BATCH_SIZE-row chunks within this page.
+      for (let i = 0; i < dedupedRows.length; i += DB_BATCH_SIZE) {
+        const chunk = dedupedRows.slice(i, i + DB_BATCH_SIZE);
+        const stmt = buildUpsertStatement(chunk.length);
+        const params = chunk.flat();
+        const result = await client.query(stmt, params);
+        for (const r of result.rows) {
+          if (r.inserted) inserted += 1;
+          else updated += 1;
+        }
+      }
+
+      // Only checkpoint after the page's upserts have actually committed
+      // (we're past the `await client.query` calls above) — a checkpoint
+      // written before the commit could skip a page that never made it in.
+      writeCheckpoint(connectionString, offset);
+
+      console.log(
+        `  page ${page}: ${features.length} fetched, ${rows.length} loaded (running total loaded: ${inserted + updated})`,
+      );
+    });
+
+    console.log("\n--- Ingest summary ---");
+    console.log(`Mode: ${FULL_MODE ? "full county" : "bbox"}`);
+    console.log(`Parcels fetched from live service: ${totalFetched}`);
+    console.log(`Inserted: ${inserted}`);
+    console.log(`Updated (already existed, re-run): ${updated}`);
+    console.log(`Total loaded rows: ${inserted + updated}`);
+    console.log(`Skipped (no PARCELNO): ${skippedNoParcelId}`);
+    console.log(`Skipped (no LOCADDRESS): ${skippedNoAddress}`);
+    console.log(`occupancy_type left NULL (unknown/ambiguous PROPCLASS): ${occupancyNullCount}`);
+    console.log(`sfha_zone assigned (point fell inside a fetched NFHL zone polygon): ${sfhaAssignedCount}`);
+    console.log(`Sample addresses: ${sampleAddresses.join(" | ")}`);
   } finally {
     await client.end();
   }
-
-  console.log("\n--- Ingest summary ---");
-  console.log(`Parcels fetched from live service: ${parcelFeatures.length}`);
-  console.log(`Inserted: ${inserted}`);
-  console.log(`Updated (already existed, re-run): ${updated}`);
-  console.log(`Total loaded rows: ${inserted + updated}`);
-  console.log(`Skipped (no PARCELNO): ${skippedNoParcelId}`);
-  console.log(`Skipped (no LOCADDRESS): ${skippedNoAddress}`);
-  console.log(`occupancy_type left NULL (unknown/ambiguous PROPCLASS): ${occupancyNullCount}`);
-  console.log(`sfha_zone assigned (point fell inside a fetched NFHL zone polygon): ${sfhaAssignedCount}`);
-  console.log(`Sample addresses: ${sampleAddresses.join(" | ")}`);
 }
 
 main().catch((err) => {

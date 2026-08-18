@@ -131,6 +131,48 @@ Full raw response with geometry: `data/raw/hamco_parcels_sample3.json`. Full fie
 6. License/terms of use were not found on the service response. A human should check https://geohub.hamiltoncounty.in.gov/ directly for a stated open-data license before any redistribution beyond internal preprocessing.
 7. `OBJECTID` is explicitly NOT stable/durable per Esri convention (can change on data refresh) — do not use as a foreign key.
 
+## Ingest coverage (updated 2026-08-18, F1 registry coverage task)
+The original ingest (`scripts/preprocess/ingest-parcels.mjs`, default mode)
+loaded only a ~3,821-parcel bbox around downtown Noblesville / the White
+River corridor — a deliberate starting subset, not full coverage. A field
+report surfaced a real flooded address (16780 River Rd, a genuine Hamilton
+County parcel, PROPCLASS 300 "Ind. - Vacant land") that WAS in this bbox but
+whose blank improvement value / square footage / year built turned out to be
+correct per the source record (AVIMPROVE, sq_ft_res, sq_ft_comm, year_built
+are all null in the live FeatureServer response for that PARCELNO — verified
+directly, not an ingest defect) — see docs/journal/2026-08-18-f1-registry.md
+for the full investigation. That prompted a real coverage check: many
+addresses aren't in the bbox at all.
+
+`scripts/preprocess/ingest-parcels.mjs --full` (or `INGEST_MODE=full`) now
+supports ingesting the entire county: `where=1=1` paging (no geometry
+filter) instead of the bbox, with NFHL zone/panel layers paged too (4,670
+zone features / 89 panel features county-wide vs. the bbox's 146/4, both
+verified live 2026-08-18 against DFIRM_ID='18057C' with no geometry filter).
+
+**Full-county ingest run, 2026-08-18 (both databases):**
+- Local dev (`riverline_dev`): 152,896 structures loaded (of 153,883 parcels
+  fetched; the gap is parcels with a null PARCELNO or LOCADDRESS in the
+  source, which the ingest has always skipped rather than guess a key).
+- Live (Supabase, `river-line.vercel.app`'s database): 152,876 structures
+  loaded.
+- `improvement_value` and `sq_ft` remain null for a meaningful share of rows
+  county-wide (roughly 14%, consistent with the bbox subset's rate before
+  this expansion) — this is the source data's own coverage, not a mapping
+  gap; see "Enrichment" below for the per-structure verification path this
+  task also added.
+
+One data quirk found during the full-county run, not previously observed at
+bbox scale: the live FeatureServer occasionally returns the same PARCELNO
+twice within a single 1000-row page (`resultOffset` window) — encountered
+around offset 38000 in the 2026-08-18 run. The ingest script de-duplicates
+within each upsert batch, keeping the last occurrence, before writing (see
+`ingest-parcels.mjs`'s `buildUpsertStatement` / de-dupe comment). This does
+not change what value ends up stored for that parcel (`ON CONFLICT DO
+UPDATE` across separate statements would have produced the same last-write-
+wins result); it only avoids a Postgres error from proposing the same
+conflict target twice in one multi-row `INSERT`.
+
 ## Unverified claims
 - Whether `geohub.hamiltoncounty.in.gov/datasets/parcels-open-data` points to this same FeatureServer or a different/older extract was not independently confirmed — only the REST service URL above was directly queried.
 - Whether Hamilton County's AVTOTGROSS is legally equivalent to "market value" as used in FEMA P-758 (substantial-damage value determination) was NOT verified — this requires either a human legal/assessor confirmation or reliance on the official-override / appraisal path per build spec §4.1.

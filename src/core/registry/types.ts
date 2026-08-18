@@ -17,6 +17,19 @@ export interface RegistrySearchResult {
   address: string;
   occupancyType: OccupancyType | null;
   sfhaZone: string | null;
+  /** DLGF property class code (see docs/data-contracts/dlgf-property-classes.md).
+   * Shown alongside parcelId in list rows so two structures that legitimately
+   * share one situs address (condos, outbuildings, ROW parcels) are
+   * distinguishable, not deduped away — F1 registry coverage task. */
+  propClass: string | null;
+  /** AVIMPROVE, same field the detail page shows as "Improvement value" —
+   * a second differentiator for list rows sharing an address string. */
+  improvementValue: number | null;
+  /** true when this row was hand-created by an assessor because the parcel
+   * was not found in the county ingest (F1 "Structure not found?" path) —
+   * never inferred from address alone; sourced from structures.notes'
+   * fixed sentinel prefix (see queries.ts MANUAL_ENTRY_MARKER). */
+  isManualEntry: boolean;
 }
 
 export interface RegistryNearbyResult extends RegistrySearchResult {
@@ -40,4 +53,45 @@ export interface RegistryStructureDetail {
   yearBuilt: number | null;
   propClass: string | null;
   createdAt: string;
+  /** See RegistrySearchResult.isManualEntry. */
+  isManualEntry: boolean;
+}
+
+// --- Enrichment (autofill from the county record) --------------------------
+// A field this app can suggest a value for from the live Hamilton County
+// FeatureServer. Deliberately a narrow, explicit list — NOT "any column" —
+// so a new structures column never silently becomes suggestible without a
+// human deciding the source field mapping for it (AGENTS.md rule 4).
+export type EnrichableField =
+  | "improvementValue"
+  | "sqFt"
+  | "yearBuilt"
+  | "stories"
+  | "occupancyType"
+  | "propClass";
+
+export interface EnrichmentSuggestion {
+  field: EnrichableField;
+  /** Current value is always null when a suggestion exists — accept never
+   * overwrites a populated field (see queries.ts applyEnrichment). */
+  suggestedValue: string | number;
+  /** Human label, e.g. "Improvement value". */
+  label: string;
+  sourceLabel: string; // e.g. "County assessor record, fetched 2026-08-18"
+}
+
+export interface EnrichmentResult {
+  available: boolean; // false when the county service could not be reached — degrade silently
+  fetchedAt: string | null; // ISO date, only set when available
+  suggestions: EnrichmentSuggestion[];
+}
+
+export type EnrichmentAcceptedFields = Partial<
+  Record<EnrichableField, string | number>
+>;
+
+export interface ManualStructureInput {
+  address: string;
+  parcelId: string | null; // null = unknown, a synthetic id is generated
+  occupancyType: OccupancyType | null;
 }

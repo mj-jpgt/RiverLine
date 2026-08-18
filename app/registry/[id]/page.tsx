@@ -4,20 +4,21 @@ import Link from "next/link";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
 import { getStructureById } from "@/core/registry";
 import { OccupancyEditor } from "./OccupancyEditor";
+import { EnrichmentPanel } from "./EnrichmentPanel";
 import motion from "@/shared/ui/motion.module.css";
 import styles from "./page.module.css";
 
 const VALUE_SOURCE_LABELS: Record<string, string> = {
   assessed_improvement:
-    "Assessed improvement value — market value pending, see official",
-  assessed_total: "Assessed total value (land + improvements)",
-  assessed_adjusted: "Assessed value, adjusted",
-  appraisal: "Independent appraisal",
-  official_override: "Set by official override",
+    "Assessed improvement value. The county assessor's record, not a market value. An official confirms the market value used for the determination.",
+  assessed_total: "Assessed total value: land plus improvements, from the county assessor's record.",
+  assessed_adjusted: "Assessed value, adjusted by an official.",
+  appraisal: "Independent appraisal.",
+  official_override: "Entered or confirmed directly by an official, not from an automated source.",
 };
 
 function formatCurrency(value: number | null): string {
-  if (value === null) return "Not available";
+  if (value === null) return "Not on file";
   return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
@@ -46,6 +47,12 @@ export default async function StructureDetailPage({
   }
 
   const valueSourceLabel = VALUE_SOURCE_LABELS[structure.valueSource] ?? structure.valueSource;
+  const hasMissingFields =
+    structure.improvementValue === null ||
+    structure.sqFt === null ||
+    structure.yearBuilt === null ||
+    structure.stories === null ||
+    structure.occupancyType === null;
 
   return (
     <main className={`${styles.main} ${motion.pageEnter}`}>
@@ -56,6 +63,12 @@ export default async function StructureDetailPage({
       <div className={styles.header}>
         <p className={styles.eyebrow}>Parcel {structure.parcelId}</p>
         <h1 className={styles.heading}>{structure.address}</h1>
+        {structure.isManualEntry ? (
+          <p className={styles.manualBadge}>
+            Unverified manual entry. This record was typed in by an assessor because the parcel was
+            not found in the county records. Confirm details in the field.
+          </p>
+        ) : null}
       </div>
 
       <section className={styles.card} aria-label="Assessed values">
@@ -122,6 +135,8 @@ export default async function StructureDetailPage({
           )}
         </div>
       </section>
+
+      <EnrichmentPanel structureId={structure.id} hasMissingFields={hasMissingFields} />
 
       <Link href={`/capture/${structure.id}`} className={styles.startAssessment}>
         Start assessment

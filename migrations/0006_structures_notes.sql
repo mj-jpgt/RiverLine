@@ -1,0 +1,29 @@
+-- ============================================================================
+-- 0006_structures_notes.sql
+-- F1 (registry coverage): ADDITIVE migration, following the exact 0002/0003/
+-- 0004/0005 precedent of extending outside schema/core.sql, which stays
+-- FROZEN and untouched (AGENTS.md rule 1).
+--
+-- Why this is needed: the "Structure not found?" manual-creation path
+-- (a structure record hand-entered by a field assessor when a flooded
+-- house is not in the loaded parcel set) must be visibly flagged as
+-- unverified everywhere it's read. structures.value_source is a required,
+-- fixed-enum column ('assessed_total','assessed_improvement',
+-- 'assessed_adjusted','appraisal','official_override') with no member for
+-- "hand-entered, no source yet" — reusing an existing value there would
+-- mislabel the record's valuation methodology, not just its provenance.
+-- structures has no free-text column at all (unlike assessments.notes and
+-- determinations.notes, which already exist for exactly this kind of
+-- human-readable flag). No existing column can honestly carry this signal,
+-- so this is the "additive migration only if truly impossible otherwise"
+-- case AGENTS.md and this task's brief both anticipate.
+--
+-- Nullable, no backfill: every existing structures row came from the real
+-- county ingest, so notes is simply null for all of them — nothing to
+-- infer. src/core/registry/queries.ts writes a fixed sentinel prefix
+-- ("[UNVERIFIED MANUAL ENTRY]") into this column only for rows created via
+-- createManualStructure(); every read path checks that exact prefix, never
+-- free-text sniffing.
+-- ============================================================================
+
+alter table structures add column notes text;

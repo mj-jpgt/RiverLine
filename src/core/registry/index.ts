@@ -6,10 +6,18 @@ export {
   nearestStructures,
   getStructureById,
   setOccupancyType,
+  getEnrichmentSuggestions,
+  applyEnrichment,
+  createManualStructure,
 } from "./queries";
 export type {
   OccupancyType,
   RegistrySearchResult,
   RegistryNearbyResult,
   RegistryStructureDetail,
+  EnrichableField,
+  EnrichmentSuggestion,
+  EnrichmentResult,
+  EnrichmentAcceptedFields,
+  ManualStructureInput,
 } from "./types";

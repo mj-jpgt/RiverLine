@@ -50,6 +50,18 @@
   overflow-wrap: anywhere;
 }
 
+.manualBadge {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-status-borderline);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-status-borderline);
+  border-radius: var(--radius-md);
+  line-height: 1.5;
+}
+
 .card {
   margin-bottom: var(--space-5);
   padding: var(--space-5);
@@ -233,4 +245,149 @@
 .retryButton:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/* --- Enrichment ("Refresh from county records") ------------------------ */
+
+.enrichPanel {
+  margin-bottom: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.enrichChecking,
+.enrichUnavailable {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.enrichHeading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.enrichSubtext {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.enrichList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.enrichItem {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-surface);
+}
+
+.enrichItem:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.enrichLabel {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.enrichRow {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.enrichInput {
+  flex: 1;
+  min-height: var(--tap-min);
+  box-sizing: border-box;
+  padding: 0 var(--space-3);
+  font-size: var(--text-base);
+  font-family: var(--font-data);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.enrichInput:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.enrichAccept {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.enrichAccept:hover {
+  background: var(--color-action-hover);
+}
+
+.enrichAccept:active {
+  background: var(--color-action-pressed);
+}
+
+.enrichAccept:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.enrichAccept:disabled {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.enrichSource {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.enrichRetry {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-action);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+}
+
+.enrichRetry:hover {
+  background: var(--color-surface);
+}
+
+.enrichRetry:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.enrichError {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  font-weight: 600;
 }

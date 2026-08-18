@@ -163,10 +163,32 @@
   outline-offset: 2px;
 }
 
+.resultMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
 .resultAddress {
   font-size: var(--text-lg);
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+
+.resultDifferentiators {
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.resultManualBadge {
+  align-self: flex-start;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-status-borderline);
 }
 
 .resultMeta {
@@ -220,4 +242,21 @@
 
 .errorPanel .statePanelText {
   color: var(--color-danger);
+}
+
+.notFoundLink {
+  display: inline-block;
+  margin-top: var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-action);
+}
+
+.notFoundLink:hover {
+  color: var(--color-action-hover);
+}
+
+.notFoundLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
 }

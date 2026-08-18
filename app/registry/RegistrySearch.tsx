@@ -19,6 +19,11 @@ function formatDistance(meters: number): string {
   return `${miles.toFixed(1)} mi`;
 }
 
+function formatValue(value: number | null): string {
+  if (value === null) return "No value on file";
+  return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
+
 export function RegistrySearch() {
   const inputId = useId();
   const [query, setQuery] = useState("");
@@ -60,7 +65,7 @@ export function RegistrySearch() {
         setState("loaded");
       } catch {
         if (requestId !== requestIdRef.current) return;
-        setErrorMessage("Network error — check your connection and try again.");
+        setErrorMessage("Network error. Check your connection and try again.");
         setState("error");
       }
     }, SEARCH_DEBOUNCE_MS);
@@ -99,7 +104,7 @@ export function RegistrySearch() {
           setNearResults(body.results);
           setState("loaded");
         } catch {
-          setErrorMessage("Network error — check your connection and try again.");
+          setErrorMessage("Network error. Check your connection and try again.");
           setState("error");
         }
       },
@@ -147,7 +152,7 @@ export function RegistrySearch() {
         disabled={locating}
         className={styles.locateButton}
       >
-        {locating ? "Finding your location…" : "Use my location — nearest structures"}
+        {locating ? "Finding your location…" : "Use my location: nearest structures"}
       </button>
 
       {state === "idle" ? (
@@ -181,6 +186,14 @@ export function RegistrySearch() {
               ? "No structures match near your current location."
               : "No structures match that address."}
           </p>
+          {mode === "search" ? (
+            <Link
+              href={`/registry/new${query.trim() ? `?address=${encodeURIComponent(query.trim())}` : ""}`}
+              className={styles.notFoundLink}
+            >
+              Structure not found? Add it by hand
+            </Link>
+          ) : null}
         </div>
       ) : null}
 
@@ -193,7 +206,18 @@ export function RegistrySearch() {
             {results.map((result) => (
               <li key={result.id} className={styles.resultItem}>
                 <Link href={`/registry/${result.id}`} className={styles.resultLink}>
-                  <span className={styles.resultAddress}>{result.address}</span>
+                  <span className={styles.resultMain}>
+                    <span className={styles.resultAddress}>{result.address}</span>
+                    <span className={styles.resultDifferentiators}>
+                      Parcel {result.parcelId}
+                      {result.propClass ? ` · Class ${result.propClass}` : ""}
+                      {" · "}
+                      {formatValue(result.improvementValue)}
+                    </span>
+                    {result.isManualEntry ? (
+                      <span className={styles.resultManualBadge}>Unverified manual entry</span>
+                    ) : null}
+                  </span>
                   <span className={styles.resultMeta}>
                     {"distanceMeters" in result ? (
                       <span className={styles.resultDistance}>

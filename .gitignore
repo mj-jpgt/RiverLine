@@ -24,3 +24,6 @@ public/swe-worker*.js.map
 # T-C6: pg_dump output from `pnpm db:backup` (scripts/ops/backup.mjs). Real
 # database contents, never committed.
 /backups/
+
+.vercel
+.env*
