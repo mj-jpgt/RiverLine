@@ -34,3 +34,27 @@ DB host is IPv6-only and unroutable from this network; ~20 pooler regions
 probed, tenant not found, so the exact hostname must come from the dashboard
 Connect dialog; (2) `vercel login`; (3) later, a Postmark server token (ADR
 0009) for real magic-link email.
+
+## LIVE DEPLOYMENT (2026-08-18, orchestrator)
+
+**https://river-line.vercel.app is live.** Sequence executed and verified:
+1. Supabase region located via AWS ip-ranges.json (AAAA 2600:1f11::/36 →
+   ca-central-1); working endpoint: aws-0-ca-central-1.pooler.supabase.com
+   (6543 transaction / 5432 session; the earlier probe's 8s timeout was too
+   short — 20s connects). Direct db host is IPv6-only, unroutable here.
+2. All 5 migrations applied via session pooler (sslmode=no-verify — pooler
+   chain lacks a public CA path; documented, revisit with supabase CA cert).
+3. `grant riverline_app to postgres` — required on Supabase (non-superuser
+   postgres can't SET ROLE without membership; local superuser masked this).
+4. Seeded; ingested 3,821 real parcels (3,826 zone assignments) live.
+5. RLS proven live: in-tenant 3821 rows, cross-tenant 0.
+6. Vercel project `river-line` linked; 7 production env vars; redeployed.
+   Gotcha: PowerShell `Write-Output | vercel env add` corrupted DATABASE_URL
+   (runtime saw hostname "base"); re-set byte-exact via bash printf. Env
+   changes require a redeploy to take effect.
+7. Live probes: / and /login HTTP 200 serving RiverLine; POST
+   /api/auth/request-link reaches the db (user lookup + token insert) and
+   fails ONLY at the unconfigured email transport — the designed B4 state.
+
+**Remaining for real logins:** EMAIL_DRIVER=http + Postmark token (ADR 0009)
+in Vercel env + redeploy. Everything else is live.
