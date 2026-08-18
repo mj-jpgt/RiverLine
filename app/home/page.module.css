@@ -1,18 +1,17 @@
+/* Role-aware launchpad. Text-forward sections, no icon-topped summary cards
+   (docs/design/components.md §4.2), separation from spacing + a background-
+   color step, never a shadow or colored strip (ui-review-checklist.md
+   Part A). */
+
 .main {
   min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-6);
+  padding: var(--space-6) var(--space-5) var(--space-8);
+  max-width: 44rem;
+  margin: 0 auto;
 }
 
-.card {
-  width: 100%;
-  max-width: 28rem;
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-6);
+.header {
+  margin-bottom: var(--space-7);
 }
 
 .eyebrow {
@@ -25,59 +24,312 @@
 }
 
 .heading {
-  margin: 0 0 var(--space-5);
+  margin: 0;
   font-size: var(--text-2xl);
   font-weight: 700;
   color: var(--color-text);
   overflow-wrap: anywhere;
 }
 
-.meta {
-  margin: 0 0 var(--space-6);
-  display: grid;
-  gap: var(--space-4);
+/* --- Section scaffolding ------------------------------------------------ */
+
+.section {
+  margin-bottom: var(--space-8);
 }
 
-.meta div {
+.sectionHeading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.sectionSubhead {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* --- Primary call-to-action link (e.g. "Find structure") ---------------- */
+
+.primaryLink {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: calc(var(--tap-min) * 1.4);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+  text-decoration: none;
 }
 
-.meta dt {
+.primaryLink:hover {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.primaryLink:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
+}
+
+.primaryLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.primaryLinkHint {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* --- Secondary link row (e.g. "Dashboard") ------------------------------ */
+
+.secondaryLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.secondaryLink:hover {
+  background: var(--color-surface);
+}
+
+.secondaryLink:active {
+  border-color: var(--color-action);
+}
+
+.secondaryLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.secondaryLinkLabel {
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.secondaryLinkMeta {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
 
-.meta dd {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: 600;
+/* --- Review-queue stat tiles (real counts, not decoration) -------------- */
+
+.statsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
-.mono {
-  font-family: var(--font-data);
-  font-size: var(--text-sm) !important;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-
-.logoutButton {
-  width: 100%;
-  min-height: var(--tap-min);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--color-text);
+.statTile {
+  flex: 1 1 10rem;
+  padding: var(--space-4);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
 
-.logoutButton:hover {
+.statCount {
+  display: block;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.statLabel {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.statTileBorderline {
+  border-color: var(--color-status-borderline);
+}
+
+.statTileBorderline .statCount {
+  color: var(--color-status-borderline);
+}
+
+/* --- Honest config-status chip (ordinance citation) ---------------------- */
+
+.configChip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.configChipOk {
+  composes: configChip;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-status-not-sd);
+  color: var(--color-text);
+}
+
+.configChipMissing {
+  composes: configChip;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-status-sd);
+  color: var(--color-text);
+}
+
+.configDot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.configChipOk .configDot {
+  background: var(--color-status-not-sd);
+}
+
+.configChipMissing .configDot {
+  background: var(--color-status-sd);
+}
+
+/* --- Queued assessments (offline queue, client-rendered) ---------------- */
+
+.queuedList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.queuedItem {
+  display: block;
+}
+
+.queuedLink {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-4);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.queuedLink:hover {
   background: var(--color-surface);
 }
 
-.logoutButton:focus-visible {
+.queuedLink:active {
+  border-color: var(--color-action);
+}
+
+.queuedLink:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+.queuedMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.queuedStructure {
+  font-family: var(--font-data);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.queuedMeta {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.syncBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  border: 2px solid currentColor;
+  white-space: nowrap;
+}
+
+.syncBadgeQueued {
+  composes: syncBadge;
+  color: var(--color-status-draft);
+}
+
+.syncBadgeSyncing {
+  composes: syncBadge;
+  color: var(--color-status-borderline);
+}
+
+.syncBadgeError {
+  composes: syncBadge;
+  color: var(--color-status-sd);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* --- State panels (loading / empty / error) ------------------------------ */
+
+.statePanel {
+  padding: var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.statePanelText {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.errorPanel {
+  composes: statePanel;
+  border-color: var(--color-danger);
+}
+
+.errorPanel .statePanelText {
+  color: var(--color-danger);
 }

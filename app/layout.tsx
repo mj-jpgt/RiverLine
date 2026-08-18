@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { RegisterServiceWorker } from "./register-sw";
+import { AppShell, type ShellSession } from "./AppShell";
+import { SESSION_COOKIE_NAME, verifySessionCookie } from "@/core/auth";
 
 export const metadata: Metadata = {
   title: "RiverLine SDD",
@@ -16,14 +19,23 @@ export const viewport: Viewport = {
   themeColor: "#0b1b2b",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Soft session read only — NOT a role guard/redirect. Every protected page
+  // still does its own requireRole(...) + redirect("/login") (unchanged);
+  // this is purely so the persistent shell (app/AppShell.tsx) knows whether
+  // to render its header, and with which email/role, on the unauthenticated
+  // pages ("/", "/login") this same layout also wraps.
+  const cookieStore = await cookies();
+  const session = verifySessionCookie(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+  const shellSession: ShellSession | null = session ? { email: session.email, role: session.role } : null;
+
   return (
     <html lang="en">
       <body>
         <RegisterServiceWorker />
-        {children}
+        <AppShell session={shellSession}>{children}</AppShell>
       </body>
     </html>
   );

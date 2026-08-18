@@ -1,0 +1,223 @@
+/* Persistent app-shell header + nav — tokens only (docs/design/tokens.css).
+   Separation comes from a background-color step (surface-raised on
+   surface) plus one flat border, never a shadow or a colored strip
+   (docs/design/direction.md, docs/design/ui-review-checklist.md Part A). */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.brand {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.section {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+/* --- Primary nav ------------------------------------------------------- */
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.navLink,
+.navLinkActive {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  background: var(--color-surface);
+}
+
+.navLink:active {
+  background: var(--color-surface);
+  border-color: var(--color-action);
+}
+
+.navLink:focus-visible,
+.navLinkActive:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.navLinkActive {
+  background: var(--color-action);
+  border-color: var(--color-action);
+  color: var(--color-surface-raised);
+}
+
+/* --- Identity: email + role + sign out ---------------------------------- */
+
+.identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: var(--space-2);
+}
+
+.email {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+  max-width: 16rem;
+}
+
+.roleChip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--color-status-draft);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.signOutForm {
+  margin: 0;
+}
+
+.signOutButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.signOutButton:hover {
+  background: var(--color-surface);
+}
+
+.signOutButton:active {
+  background: var(--color-surface);
+  border-color: var(--color-danger);
+}
+
+.signOutButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* --- Sync / offline status strip ---------------------------------------
+   Full-width, persistent, never a toast (AGENTS.md rule 7). Calm tones for
+   syncing/synced, only a real error uses --color-danger — matches the
+   capture flow's own OfflineBanner semantics (components.md "Offline
+   banner" row), reused here as an independent shell-level presentation of
+   the same real state. */
+
+.syncStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.syncOffline {
+  composes: syncStrip;
+  background: var(--color-status-draft);
+  color: var(--color-surface-raised);
+}
+
+.syncSyncing {
+  composes: syncStrip;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.syncError {
+  composes: syncStrip;
+  background: var(--color-danger);
+  color: var(--color-surface-raised);
+}
+
+.syncSynced {
+  composes: syncStrip;
+  background: var(--color-status-not-sd);
+  color: var(--color-surface-raised);
+}
+
+.syncText {
+  margin: 0;
+}
+
+.syncButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: inherit;
+  background: transparent;
+  border: 2px solid currentColor;
+  border-radius: var(--radius-md);
+}
+
+/* Solid token-backed swap on hover/active rather than a translucent
+   rgba() overlay — every color in this file must trace to
+   docs/design/tokens.css (ui-review-checklist.md Part A: "any raw hex
+   value, rgb(), or named CSS color anywhere outside tokens.css?"). */
+.syncButton:hover {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.syncButton:active {
+  background: var(--color-text);
+  color: var(--color-surface-raised);
+}
+
+.syncButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

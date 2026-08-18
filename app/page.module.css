@@ -1,0 +1,111 @@
+.main {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.card {
+  width: 100%;
+  max-width: 32rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-8) var(--space-6);
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.15;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.lede {
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.factList {
+  margin: 0 0 var(--space-7);
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.factItem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.factItem:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.factLabel {
+  flex: none;
+  min-width: 6.5rem;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.signInButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap-min);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+
+.signInButton:hover {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.signInButton:active {
+  background: var(--color-action-pressed);
+  border-color: var(--color-action-pressed);
+}
+
+.signInButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.footNote {
+  margin: var(--space-5) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
