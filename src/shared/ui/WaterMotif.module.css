@@ -1,0 +1,65 @@
+/* Design v2 water motif — tokens only (docs/design/tokens.css). Solid
+   fills at an opacity step, never a gradient (ui-review-checklist.md Part A
+   bans decorative gradients outright) — "monochrome-blue" here means one
+   hue, expressed as flat color + opacity layering, not a color ramp. */
+
+.hero,
+.accent {
+  display: block;
+  width: 100%;
+  color: var(--color-action);
+  overflow: hidden;
+}
+
+.hero {
+  height: 7.5rem;
+}
+
+.accent {
+  height: 6px;
+}
+
+.waveGroup {
+  animation: waterDrift 16s linear infinite;
+}
+
+@keyframes waterDrift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* Exactly one wave period (see WaterMotif.tsx WAVE_PATH comment) — a
+       full period of horizontal travel looks identical to the start frame,
+       so the loop has no visible seam or jump. */
+    transform: translateX(-300px);
+  }
+}
+
+.waveFill {
+  fill: currentColor;
+  fill-opacity: 0.14;
+  stroke: none;
+}
+
+.waveLine {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.55;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.accent .waveLine {
+  stroke-width: 3;
+  stroke-opacity: 0.7;
+}
+
+.accent .waveFill {
+  fill-opacity: 0.22;
+}
+
+/* Reduced motion: the app-wide safety net in app/globals.css already
+   collapses every animation-duration/iteration-count to effectively zero,
+   so .waveGroup freezes on a single static frame automatically — no
+   duplicate @media block needed here (same reasoning already documented in
+   src/shared/ui/motion.module.css's own loadingFill rule). */

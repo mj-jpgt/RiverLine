@@ -8,7 +8,10 @@
   top: 0;
   z-index: 20;
   background: var(--color-surface-raised);
-  border-bottom: 1px solid var(--color-border);
+  /* Design v2: the flat 1px border-bottom is replaced by the animated
+     WaterMotif "accent" strip rendered at the bottom of this header
+     (AppHeader.tsx) — same separating function, on-brand instead of a
+     plain gray rule. */
 }
 
 .topRow {

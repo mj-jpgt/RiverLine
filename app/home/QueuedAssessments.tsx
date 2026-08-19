@@ -11,8 +11,10 @@
 // waiting"), not a sync trigger.
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "motion/react";
 import { getQueuedDrafts } from "@/core/capture";
 import type { CaptureDraft } from "@/core/capture";
+import { ENTRANCE_VARIANTS, ENTRANCE_TRANSITION, STAGGER_GROUP_TRANSITION, useEntranceInitial } from "@/shared/ui";
 import styles from "./page.module.css";
 
 type LoadState = "loading" | "ready" | "error";
@@ -32,6 +34,9 @@ function syncBadgeClass(status: CaptureDraft["syncStatus"]): string {
 export function QueuedAssessments() {
   const [state, setState] = useState<LoadState>("loading");
   const [drafts, setDrafts] = useState<CaptureDraft[]>([]);
+  // Called unconditionally (React rules of hooks) even though it's only
+  // used by the "ready, non-empty" render path below.
+  const initial = useEntranceInitial();
 
   useEffect(() => {
     let cancelled = false;
@@ -81,9 +86,19 @@ export function QueuedAssessments() {
   }
 
   return (
-    <ul className={styles.queuedList}>
+    <motion.ul
+      className={styles.queuedList}
+      initial={initial}
+      animate="visible"
+      variants={{ visible: { transition: STAGGER_GROUP_TRANSITION } }}
+    >
       {drafts.map((draft) => (
-        <li key={draft.clientId} className={styles.queuedItem}>
+        <motion.li
+          key={draft.clientId}
+          className={styles.queuedItem}
+          variants={ENTRANCE_VARIANTS}
+          transition={ENTRANCE_TRANSITION}
+        >
           <Link href={`/capture/${encodeURIComponent(draft.structureId)}`} className={styles.queuedLink}>
             <div className={styles.queuedMain}>
               <span className={styles.queuedStructure}>Structure {draft.structureId.slice(0, 8)}</span>
@@ -97,8 +112,8 @@ export function QueuedAssessments() {
               {syncLabel(draft.syncStatus)}
             </span>
           </Link>
-        </li>
+        </motion.li>
       ))}
-    </ul>
+    </motion.ul>
   );
 }

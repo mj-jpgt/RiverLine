@@ -12,15 +12,28 @@
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Design v2 flood-instrument identity (docs/design/direction.md "v2
+   amendment" #2) — the WaterMotif "hero" variant sits above the card copy,
+   clipped by the card's own rounded top corners via .card's overflow:
+   hidden above. */
+.wave {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cardBody {
   padding: var(--space-8) var(--space-6);
 }
 
 .heading {
   margin: 0 0 var(--space-2);
   font-size: var(--text-2xl);
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--color-text);
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .eyebrow {

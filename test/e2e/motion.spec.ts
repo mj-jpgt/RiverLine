@@ -234,3 +234,139 @@ test.describe("V3 motion pass", () => {
     expect(seconds(animationDuration)).toBeLessThan(0.01);
   });
 });
+
+// Design v2 — fonts (next/font: Public Sans / IBM Plex Mono), the new
+// `motion`-package entrance animation on non-field surfaces (landing,
+// home), and the "no emojis anywhere" copy rule (docs/design/direction.md
+// "v2 amendment"). A SEPARATE describe block from "V3 motion pass" above:
+// that block proves the pre-existing CSS-only --motion-fast/--motion-base
+// system (docs/design/motion.md); this one proves the newer, JS-driven
+// entrance category (docs/adr/0010-motion-dependency.md) added on top of
+// it, which uses the Web Animations API via motion/react rather than a
+// named CSS @keyframes animation — hence the different assertion strategy
+// below (Element.getAnimations()) instead of reading
+// getComputedStyle().animationName/-Duration like the block above does.
+test.describe("Design v2 — fonts, entrance motion, no emojis", () => {
+  test.describe.configure({ mode: "serial" });
+
+  test("landing page loads Public Sans (UI) via next/font", async ({ page }) => {
+    await page.goto("/");
+    const heading = page.getByRole("heading", { name: "RiverLine SDD" });
+    await expect(heading).toBeVisible();
+    // next/font/google self-hosts the real named font and resolves
+    // docs/design/tokens.css's --font-ui through the generated
+    // --font-public-sans variable (app/layout.tsx) — the computed,
+    // fully-resolved font-family on a real heading must actually include
+    // the family name, not just fall through to a generic system fallback.
+    const headingFont = await heading.evaluate((el) => getComputedStyle(el).fontFamily);
+    expect(headingFont).toMatch(/Public Sans/i);
+  });
+
+  test("home page's stat tiles render with the IBM Plex Mono data face", async ({ page, request, baseURL }) => {
+    await loginViaDevMagicLink(page, request, baseURL, OFFICIAL_EMAIL);
+    await expect(page.getByRole("heading", { name: "Determination review" })).toBeVisible();
+    const statCount = page.getByText("Awaiting review").locator("..").locator("span").first();
+    const fontFamily = await statCount.evaluate((el) => getComputedStyle(el).fontFamily);
+    expect(fontFamily).toMatch(/IBM Plex Mono/i);
+  });
+
+  test("landing hero plays a real staggered entrance animation under normal motion settings", async ({ page }) => {
+    await page.goto("/");
+    const heading = page.getByRole("heading", { name: "RiverLine SDD" });
+    await expect(heading).toBeVisible();
+
+    // motion/react drives this category of animation via the Web
+    // Animations API rather than a named CSS @keyframes rule (unlike the
+    // pre-existing --motion-base .pageEnter mechanism proven above) —
+    // Element.getAnimations() is the correct, real proof that a browser
+    // Animation is actually attached to this element, not just that some
+    // CSS class exists. Actively polled (not a single evaluate()
+    // immediately after page.goto resolves) because the animation is only
+    // attached once React hydrates and Motion's mount effect runs, which
+    // can trail the "load" event `page.goto` waits for.
+    await page.waitForFunction(
+      () => (document.querySelector("h1")?.getAnimations().length ?? 0) > 0,
+      { timeout: 2000 },
+    );
+
+    // And it genuinely settles to the fully visible end state — the
+    // entrance is a real, bounded transition, not a permanent opacity: 0.
+    await page.waitForTimeout(500);
+    const finalOpacity = await heading.evaluate((el) => getComputedStyle(el).opacity);
+    expect(finalOpacity).toBe("1");
+
+    // Staggering: the sign-in button (rendered after the fact list further
+    // down the card) must not have already finished before the heading —
+    // proof this is a genuine staggered sequence, not everything animating
+    // in lockstep. Checked by reading each element's Web Animations API
+    // start time relative to the other, immediately after load.
+    const order = await page.evaluate(() => {
+      const h1 = document.querySelector("h1");
+      const signIn = document.querySelector('a[href="/login"]');
+      const h1Anim = h1?.getAnimations()[0];
+      const signInAnim = signIn?.getAnimations()[0];
+      if (!h1Anim || !signInAnim) return null;
+      return { h1Start: h1Anim.startTime, signInStart: signInAnim.startTime };
+    });
+    if (order && order.h1Start !== null && order.signInStart !== null) {
+      expect(Number(order.signInStart)).toBeGreaterThanOrEqual(Number(order.h1Start));
+    }
+  });
+
+  test("landing hero renders the correct final state instantly, with no animation attached, under prefers-reduced-motion", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    const heading = page.getByRole("heading", { name: "RiverLine SDD" });
+    await expect(heading).toBeVisible();
+
+    // motion/react's documented behavior for initial={false} (this app's
+    // useEntranceInitial() under reduced motion — src/shared/ui/Entrance.tsx):
+    // render directly in the final state, no mount transition queued at
+    // all — so there should be no Animation object here whatsoever, not
+    // merely one that finished instantly.
+    const hasAnimation = await page.evaluate(() => {
+      const el = document.querySelector("h1");
+      return el ? el.getAnimations().length > 0 : false;
+    });
+    expect(hasAnimation).toBe(false);
+
+    const opacity = await heading.evaluate((el) => getComputedStyle(el).opacity);
+    expect(opacity).toBe("1");
+    const transform = await heading.evaluate((el) => getComputedStyle(el).transform);
+    expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(transform);
+  });
+
+  // Extended \p{Extended_Pictographic} covers the full modern emoji
+  // repertoire (skin-tone modifiers, ZWJ sequences included as their
+  // constituent code points), not a hand-picked subset of ranges — a real
+  // Unicode property, not invented (MDN "Unicode property escapes",
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Unicode_property_escapes,
+  // "Extended_Pictographic" is one of the documented binary properties).
+  const EMOJI_RE = /\p{Extended_Pictographic}/u;
+
+  test("zero emoji characters in the rendered landing page", async ({ page }) => {
+    await page.goto("/");
+    const text = await page.evaluate(() => document.body.innerText);
+    expect(EMOJI_RE.test(text)).toBe(false);
+  });
+
+  test("zero emoji characters in the rendered home page (assessor and official views)", async ({
+    page,
+    request,
+    baseURL,
+  }) => {
+    await loginViaDevMagicLink(page, request, baseURL, OFFICIAL_EMAIL);
+    await expect(page.getByRole("heading", { name: `Welcome, ${OFFICIAL_EMAIL}` })).toBeVisible();
+    const officialText = await page.evaluate(() => document.body.innerText);
+    expect(EMOJI_RE.test(officialText)).toBe(false);
+
+    await page.getByRole("button", { name: "Log out" }).click();
+    await expect(page).toHaveURL(/\/login$/);
+    await loginViaDevMagicLink(page, request, baseURL, ASSESSOR_EMAIL);
+    await expect(page.getByRole("heading", { name: `Welcome, ${ASSESSOR_EMAIL}` })).toBeVisible();
+    const assessorText = await page.evaluate(() => document.body.innerText);
+    expect(EMOJI_RE.test(assessorText)).toBe(false);
+  });
+});

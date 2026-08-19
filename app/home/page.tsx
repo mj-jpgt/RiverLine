@@ -7,7 +7,8 @@ import { getReviewQueue } from "@/core/determination";
 import { isNonEmptyOrdinanceCitation } from "@/modules/a1-letters";
 import { withTenant } from "@/shared/db";
 import { QueuedAssessments } from "./QueuedAssessments";
-import motion from "@/shared/ui/motion.module.css";
+import { RevealSection } from "./RevealSection";
+import { CountUp } from "@/shared/ui";
 import styles from "./page.module.css";
 
 // Role-aware launchpad (T-W1). Replaces the T-C1 generic "session plumbing
@@ -81,16 +82,23 @@ export default async function HomePage() {
     }
   }
 
+  // Sequential stagger order for RevealSection, in the same top-to-bottom
+  // order this page already renders its role-gated sections — a plain
+  // incrementing counter rather than a fixed per-role table, since only one
+  // role's branch ever actually renders for a given page load.
+  let order = 0;
+  const nextOrder = () => order++;
+
   return (
-    <main className={`${styles.main} ${motion.pageEnter}`}>
-      <div className={styles.header}>
+    <main className={styles.main}>
+      <RevealSection className={styles.header} order={nextOrder()}>
         <p className={styles.eyebrow}>Signed in</p>
         <h1 className={styles.heading}>Welcome, {guarded.email}</h1>
-      </div>
+      </RevealSection>
 
       {guarded.role === "assessor" ? (
         <>
-          <section className={styles.section} aria-label="Field assessment">
+          <RevealSection className={styles.section} ariaLabel="Field assessment" order={nextOrder()}>
             <h2 className={styles.sectionHeading}>Field assessment</h2>
             <p className={styles.sectionSubhead}>
               Find a structure to start or resume a damage assessment.
@@ -99,21 +107,21 @@ export default async function HomePage() {
               <span>Find structure</span>
               <span className={styles.primaryLinkHint}>Search by address or nearby</span>
             </Link>
-          </section>
+          </RevealSection>
 
-          <section className={styles.section} aria-label="Queued assessments">
+          <RevealSection className={styles.section} ariaLabel="Queued assessments" order={nextOrder()}>
             <h2 className={styles.sectionHeading}>My queued assessments</h2>
             <p className={styles.sectionSubhead}>
               Completed on this device, waiting to sync.
             </p>
             <QueuedAssessments />
-          </section>
+          </RevealSection>
         </>
       ) : null}
 
       {isOfficialOrAdmin ? (
         <>
-          <section className={styles.section} aria-label="Determination review">
+          <RevealSection className={styles.section} ariaLabel="Determination review" order={nextOrder()}>
             <h2 className={styles.sectionHeading}>Determination review</h2>
             {summaryError ? (
               <div className={styles.errorPanel} role="alert">
@@ -123,11 +131,11 @@ export default async function HomePage() {
               <>
                 <div className={styles.statsRow}>
                   <div className={styles.statTile}>
-                    <span className={styles.statCount}>{summary.pendingCount}</span>
+                    <CountUp value={summary.pendingCount} className={styles.statCount} />
                     <span className={styles.statLabel}>Awaiting review</span>
                   </div>
                   <div className={`${styles.statTile} ${styles.statTileBorderline}`}>
-                    <span className={styles.statCount}>{summary.borderlineCount}</span>
+                    <CountUp value={summary.borderlineCount} className={styles.statCount} />
                     <span className={styles.statLabel}>Borderline — requires review</span>
                   </div>
                 </div>
@@ -137,17 +145,17 @@ export default async function HomePage() {
                 </Link>
               </>
             ) : null}
-          </section>
+          </RevealSection>
 
-          <section className={styles.section} aria-label="Jurisdiction dashboard">
+          <RevealSection className={styles.section} ariaLabel="Jurisdiction dashboard" order={nextOrder()}>
             <h2 className={styles.sectionHeading}>Jurisdiction dashboard</h2>
             <Link href="/dashboard" className={styles.secondaryLink}>
               <span className={styles.secondaryLinkLabel}>Administrator dashboard</span>
               <span className={styles.secondaryLinkMeta}>Caseload, filters, CSV export</span>
             </Link>
-          </section>
+          </RevealSection>
 
-          <section className={styles.section} aria-label="Determination letters">
+          <RevealSection className={styles.section} ariaLabel="Determination letters" order={nextOrder()}>
             <h2 className={styles.sectionHeading}>Determination letters</h2>
             {summary ? (
               summary.ordinanceOnFile ? (
@@ -168,29 +176,29 @@ export default async function HomePage() {
                 </div>
               )
             ) : null}
-          </section>
+          </RevealSection>
         </>
       ) : null}
 
       {guarded.role === "admin" ? (
-        <section className={styles.section} aria-label="Administration">
+        <RevealSection className={styles.section} ariaLabel="Administration" order={nextOrder()}>
           <h2 className={styles.sectionHeading}>Administration</h2>
           <Link href="/admin" className={styles.secondaryLink}>
             <span className={styles.secondaryLinkLabel}>Jurisdiction readiness</span>
             <span className={styles.secondaryLinkMeta}>Cost tables, ordinance citation, appeal window</span>
           </Link>
-        </section>
+        </RevealSection>
       ) : null}
 
       {guarded.role === "viewer" ? (
-        <section className={styles.section} aria-label="Structure lookup">
+        <RevealSection className={styles.section} ariaLabel="Structure lookup" order={nextOrder()}>
           <h2 className={styles.sectionHeading}>Structure lookup</h2>
           <p className={styles.sectionSubhead}>View-only access to the structure registry.</p>
           <Link href="/registry" className={styles.primaryLink}>
             <span>Find structure</span>
             <span className={styles.primaryLinkHint}>Search by address or nearby</span>
           </Link>
-        </section>
+        </RevealSection>
       ) : null}
     </main>
   );

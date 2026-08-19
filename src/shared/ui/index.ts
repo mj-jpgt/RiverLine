@@ -14,3 +14,14 @@ export { SyncStatusIndicator } from "./SyncStatusIndicator";
 export type { ShellSyncStatus, SyncStatusIndicatorProps } from "./SyncStatusIndicator";
 export { LoadingIndicator } from "./LoadingIndicator";
 export { EnableTouchActiveStates } from "./EnableTouchActiveStates";
+export { WaterMotif } from "./WaterMotif";
+export type { WaterMotifProps, WaterMotifVariant } from "./WaterMotif";
+export { CountUp } from "./CountUp";
+export type { CountUpProps } from "./CountUp";
+export {
+  ENTRANCE_VARIANTS,
+  ENTRANCE_TRANSITION,
+  ENTRANCE_STAGGER_S,
+  STAGGER_GROUP_TRANSITION,
+  useEntranceInitial,
+} from "./Entrance";

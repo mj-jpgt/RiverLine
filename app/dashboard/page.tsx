@@ -18,7 +18,8 @@ import {
 } from "@/modules/a2-dashboard";
 import type { CaseloadSortColumn, SortDirection, BandFilter, StatusFilter } from "@/modules/a2-dashboard";
 import { ExportCsvButton, FullExportButton, OperationalSummaryCsvButton } from "./_components/ExportButtons";
-import motion from "@/shared/ui/motion.module.css";
+import { RevealBlock, RevealGroup, RevealItem } from "./Reveal";
+import { CountUp } from "@/shared/ui";
 import styles from "./page.module.css";
 
 // A2 administrator dashboard (T-A2): status overview (by determination
@@ -152,14 +153,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const totalPages = caseload ? Math.max(1, Math.ceil(caseload.totalCount / caseload.pageSize)) : 1;
 
   return (
-    <main className={`${styles.main} ${motion.pageEnter}`}>
-      <div className={styles.header}>
+    <main className={styles.main}>
+      <RevealBlock className={styles.header}>
         <p className={styles.eyebrow}>Administrator dashboard</p>
         <h1 className={styles.heading}>Jurisdiction caseload</h1>
         <p className={styles.subhead}>
           Every structure on record, its latest assessment, calculation, and determination state.
         </p>
-      </div>
+      </RevealBlock>
 
       {loadError ? (
         <div className={styles.errorPanel} role="alert">
@@ -169,8 +170,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <>
           {/* --- Status overview: text-forward stat rows, never icon cards
               or left-border-strip cards (docs/design/components.md §4.2). --- */}
-          <section className={styles.statsGrid} aria-label="Status overview">
-            <div className={styles.statsGroup}>
+          <RevealGroup className={styles.statsGrid} ariaLabel="Status overview">
+            <RevealItem className={styles.statsGroup}>
               <h2 className={styles.statsGroupHeading}>By determination status</h2>
               <dl className={styles.statsList}>
                 <div className={styles.statsRow}>
@@ -178,40 +179,40 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <span className={styles.statusDot} aria-hidden="true" />
                     Draft
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byDeterminationStatus.draft}</dd>
+                  <dd><CountUp value={counts!.byDeterminationStatus.draft} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeNotSd}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Adopted
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byDeterminationStatus.adopted}</dd>
+                  <dd><CountUp value={counts!.byDeterminationStatus.adopted} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeSd}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Contested
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byDeterminationStatus.contested}</dd>
+                  <dd><CountUp value={counts!.byDeterminationStatus.contested} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeDraft}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Superseded
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byDeterminationStatus.superseded}</dd>
+                  <dd><CountUp value={counts!.byDeterminationStatus.superseded} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeMuted}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     No determination
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byDeterminationStatus.none}</dd>
+                  <dd><CountUp value={counts!.byDeterminationStatus.none} className={styles.statCount} /></dd>
                 </div>
               </dl>
-            </div>
+            </RevealItem>
 
-            <div className={styles.statsGroup}>
+            <RevealItem className={styles.statsGroup}>
               <h2 className={styles.statsGroupHeading}>By calculation band</h2>
               <dl className={styles.statsList}>
                 <div className={styles.statsRow}>
@@ -219,33 +220,33 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <span className={styles.statusDot} aria-hidden="true" />
                     Substantial damage
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byCalculationBand.SD}</dd>
+                  <dd><CountUp value={counts!.byCalculationBand.SD} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeBorderline}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Borderline
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byCalculationBand.BORDERLINE}</dd>
+                  <dd><CountUp value={counts!.byCalculationBand.BORDERLINE} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeNotSd}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Not substantial damage
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byCalculationBand.NOT_SD}</dd>
+                  <dd><CountUp value={counts!.byCalculationBand.NOT_SD} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeMuted}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     No calculation
                   </dt>
-                  <dd className={styles.statCount}>{counts!.byCalculationBand.noCalculation}</dd>
+                  <dd><CountUp value={counts!.byCalculationBand.noCalculation} className={styles.statCount} /></dd>
                 </div>
               </dl>
-            </div>
+            </RevealItem>
 
-            <div className={styles.statsGroup}>
+            <RevealItem className={styles.statsGroup}>
               <h2 className={styles.statsGroupHeading}>Total</h2>
               <dl className={styles.statsList}>
                 <div className={styles.statsRow}>
@@ -253,11 +254,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <span className={styles.statusDot} aria-hidden="true" />
                     Structures on record
                   </dt>
-                  <dd className={styles.statCount}>{counts!.totalStructures}</dd>
+                  <dd><CountUp value={counts!.totalStructures} className={styles.statCount} /></dd>
                 </div>
               </dl>
-            </div>
-          </section>
+            </RevealItem>
+          </RevealGroup>
 
           {/* --- Operational picture: the numbers an EMA/county would ask
               for during an event (V5 task 3) — damage category (occupancy
@@ -266,8 +267,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               record, not merely a computed proposal — AGENTS.md rule 12).
               Same text-forward stat-row treatment as the status overview
               above, never icon cards (docs/design/components.md §4.2). --- */}
-          <section className={styles.statsGrid} aria-label="Jurisdiction operational picture">
-            <div className={styles.statsGroup}>
+          <RevealGroup className={styles.statsGrid} ariaLabel="Jurisdiction operational picture">
+            <RevealItem className={styles.statsGroup}>
               <h2 className={styles.statsGroupHeading}>Residential — by damage category</h2>
               <dl className={styles.statsList}>
                 <div className={styles.statsRow}>
@@ -275,26 +276,26 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <span className={styles.statusDot} aria-hidden="true" />
                     Substantial damage
                   </dt>
-                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.residential.SD}</dd>
+                  <dd><CountUp value={operationalSummary!.byOccupancyAndBand.residential.SD} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeBorderline}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Borderline
                   </dt>
-                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.residential.BORDERLINE}</dd>
+                  <dd><CountUp value={operationalSummary!.byOccupancyAndBand.residential.BORDERLINE} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeNotSd}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Not substantial damage
                   </dt>
-                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.residential.NOT_SD}</dd>
+                  <dd><CountUp value={operationalSummary!.byOccupancyAndBand.residential.NOT_SD} className={styles.statCount} /></dd>
                 </div>
               </dl>
-            </div>
+            </RevealItem>
 
-            <div className={styles.statsGroup}>
+            <RevealItem className={styles.statsGroup}>
               <h2 className={styles.statsGroupHeading}>Non-residential — by damage category</h2>
               <dl className={styles.statsList}>
                 <div className={styles.statsRow}>
@@ -302,26 +303,26 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <span className={styles.statusDot} aria-hidden="true" />
                     Substantial damage
                   </dt>
-                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.nonResidential.SD}</dd>
+                  <dd><CountUp value={operationalSummary!.byOccupancyAndBand.nonResidential.SD} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeBorderline}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Borderline
                   </dt>
-                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.nonResidential.BORDERLINE}</dd>
+                  <dd><CountUp value={operationalSummary!.byOccupancyAndBand.nonResidential.BORDERLINE} className={styles.statCount} /></dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeNotSd}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Not substantial damage
                   </dt>
-                  <dd className={styles.statCount}>{operationalSummary!.byOccupancyAndBand.nonResidential.NOT_SD}</dd>
+                  <dd><CountUp value={operationalSummary!.byOccupancyAndBand.nonResidential.NOT_SD} className={styles.statCount} /></dd>
                 </div>
               </dl>
-            </div>
+            </RevealItem>
 
-            <div className={styles.statsGroup}>
+            <RevealItem className={styles.statsGroup}>
               <h2 className={styles.statsGroupHeading}>Repair cost &amp; adoption</h2>
               <dl className={styles.statsList}>
                 <div className={styles.statsRow}>
@@ -329,25 +330,37 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <span className={styles.statusDot} aria-hidden="true" />
                     Computed repair cost (all bands)
                   </dt>
-                  <dd className={styles.statCount}>{usd(operationalSummary!.totalComputedRepairCost.total)}</dd>
+                  <dd>
+                    {operationalSummary!.totalComputedRepairCost.total === null ? (
+                      <span className={styles.statCount}>{usd(null)}</span>
+                    ) : (
+                      <CountUp value={operationalSummary!.totalComputedRepairCost.total} format={usd} className={styles.statCount} />
+                    )}
+                  </dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeSd}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Repair cost — substantial damage
                   </dt>
-                  <dd className={styles.statCount}>{usd(operationalSummary!.totalComputedRepairCost.SD)}</dd>
+                  <dd>
+                    {operationalSummary!.totalComputedRepairCost.SD === null ? (
+                      <span className={styles.statCount}>{usd(null)}</span>
+                    ) : (
+                      <CountUp value={operationalSummary!.totalComputedRepairCost.SD} format={usd} className={styles.statCount} />
+                    )}
+                  </dd>
                 </div>
                 <div className={styles.statsRow}>
                   <dt className={styles.statusBadgeNotSd}>
                     <span className={styles.statusDot} aria-hidden="true" />
                     Adopted substantial damage
                   </dt>
-                  <dd className={styles.statCount}>{operationalSummary!.adoptedSdCount}</dd>
+                  <dd><CountUp value={operationalSummary!.adoptedSdCount} className={styles.statCount} /></dd>
                 </div>
               </dl>
-            </div>
-          </section>
+            </RevealItem>
+          </RevealGroup>
 
           {/* --- Export --- */}
           <div className={styles.exportRow}>

@@ -20,6 +20,18 @@
    tag v3.13.0) — never written from memory. Retrieval date for all
    values in this file: 2026-08-17.
 
+   V2 AMENDMENT (2026-08-18, owner directive via docs/design/direction.md
+   "v2 amendment") — "white, blue, gray... cool near-white surfaces, a
+   strong blue accent family, grays for structure." Four color tokens were
+   re-pulled from real USWDS grades in the SAME v3.13.0 tag/files above to
+   satisfy that directive; every other color token in this file is
+   unchanged from the original pass. Each changed token is called out
+   individually below with its own before/after note — nothing here is
+   invented, every replacement value is still a real, named USWDS grade
+   fetched from raw.githubusercontent.com at tag v3.13.0, retrieved
+   2026-08-18. Fonts were replaced per the same amendment's directive #3;
+   see the font tokens section below for that citation.
+
    Primary source files fetched and read in full:
    - packages/uswds-core/src/styles/tokens/color/_blue.scss
    - packages/uswds-core/src/styles/tokens/color/_blue-warm.scss
@@ -62,8 +74,10 @@
 
    HARD CONSTRAINTS FROM direction.md
    ----------------------------------------------------------------------
-   - --color-surface is NOT pure #fff (uses USWDS gray-5, #f0f0f0).
-   - --color-text is NOT pure #000 (uses USWDS gray-90, #1b1b1b).
+   - --color-surface is NOT pure #fff (v2: USWDS gray-cool-3, #f5f6f7 —
+     was gray-5, #f0f0f0, before the v2 amendment; see inline note below).
+   - --color-text is NOT pure #000 (v2: USWDS gray-cool-90, #1c1d1f — was
+     gray-90, #1b1b1b, before the v2 amendment; see inline note below).
    - No dark mode. One theme only.
    ========================================================================== */
 
@@ -72,27 +86,39 @@
      Color — surfaces, borders, text
      ------------------------------------------------------------------ */
 
-  /* USWDS system-color-gray, grade 5 ("gray-5"). Used as USWDS's own
-     subtle/alternate background grade. Deliberately not pure white — see
-     hard constraint above. Source: tokens/color/_gray.scss */
-  --color-surface: #f0f0f0;
+  /* V2 AMENDMENT: was USWDS system-color-gray grade 5 ("gray-5", #f0f0f0,
+     the plain/warm gray family). direction.md v2 amendment #1 calls for a
+     "cool near-white surface" specifically — re-pulled from USWDS's own
+     COOL gray ramp instead: system-color-gray-cool, grade 3 ("gray-cool-3").
+     Still deliberately not pure white — see hard constraint above. Source:
+     tokens/color/_gray-cool.scss (raw.githubusercontent.com/uswds/uswds/
+     v3.13.0/packages/uswds-core/src/styles/tokens/color/_gray-cool.scss),
+     retrieved 2026-08-18. */
+  --color-surface: #f5f6f7;
 
   /* USWDS global token "white". Raised surfaces (cards, panels) sit above
      the tinted app background. Source: tokens/color/_global.scss */
   --color-surface-raised: #ffffff;
 
-  /* USWDS theme-color-base default = "gray-cool-50". Contrast vs.
-     --color-surface: 4.03:1 (vs --color-surface-raised: 4.59:1) — exceeds
-     the 3:1 WCAG 1.4.11 non-text/UI-component floor for borders and input
-     outlines. Source: tokens/color/_gray-cool.scss + settings/_settings-color.scss
+  /* USWDS theme-color-base default = "gray-cool-50". Contrast vs. the v2
+     --color-surface above: 4.24:1 (vs --color-surface-raised: 4.59:1),
+     recomputed by hand with scripts/check-contrast.mjs's own luminance
+     formula after the v2 surface change — exceeds the 3:1 WCAG 1.4.11
+     non-text/UI-component floor for borders and input outlines. Source:
+     tokens/color/_gray-cool.scss + settings/_settings-color.scss
      ($theme-color-base: "gray-cool-50") */
   --color-border: #71767a;
 
-  /* USWDS theme-color-base-ink default = "gray-90". Deliberately not pure
-     black — see hard constraint above. Contrast vs --color-surface: 15.11:1
-     (AAA). Source: tokens/color/_gray.scss + _settings-color.scss
-     ($theme-color-base-ink: "gray-90") */
-  --color-text: #1b1b1b;
+  /* V2 AMENDMENT: was USWDS theme-color-base-ink default, "gray-90"
+     (#1b1b1b, plain/warm gray family). Re-pulled from the COOL gray ramp
+     for consistency with the new --color-surface above and the "grays for
+     structure" directive: system-color-gray-cool, grade 90 ("gray-cool-90").
+     Deliberately not pure black — see hard constraint above. Source:
+     tokens/color/_gray-cool.scss (same file/tag as --color-surface above),
+     retrieved 2026-08-18. Contrast vs --color-surface: see
+     scripts/check-contrast.mjs output recorded in the journal — recomputed
+     after this change, not hand-calculated. */
+  --color-text: #1c1d1f;
 
   /* USWDS theme-color-base-dark = "gray-cool-60". Contrast vs
      --color-surface: 5.92:1 — PASSES WCAG AA (4.5:1 floor) for normal text.
@@ -108,15 +134,24 @@
      + _settings-color.scss ($theme-color-primary: "blue-60v") */
   --color-action: #005ea2;
 
-  /* USWDS theme-color-primary-dark = "blue-warm-70v". White label text on
-     this fill: 9.62:1. Source: tokens/color/_blue-warm.scss +
-     _settings-color.scss ($theme-color-primary-dark: "blue-warm-70v") */
-  --color-action-hover: #1a4480;
+  /* V2 AMENDMENT: was USWDS theme-color-primary-dark, "blue-warm-70v"
+     (#1a4480) — the BLUE-WARM family, a different hue ramp than
+     --color-action's plain "blue" family above. direction.md v2 amendment
+     #1 calls for "a strong blue accent family" (singular), so this is
+     re-pulled from the SAME blue family as --color-action instead of a
+     mixed blue/blue-warm progression: system-color-blue, vivid grade 70
+     ("blue-70v"), one step deeper than --color-action's blue-60v. Source:
+     tokens/color/_blue.scss (same file as --color-action above), retrieved
+     2026-08-18. White label-text contrast: see scripts/check-contrast.mjs
+     output recorded in the journal. */
+  --color-action-hover: #0b4778;
 
-  /* USWDS theme-color-primary-darker = "blue-warm-80v". White label text
-     on this fill: 13.60:1. Source: tokens/color/_blue-warm.scss +
-     _settings-color.scss ($theme-color-primary-darker: "blue-warm-80v") */
-  --color-action-pressed: #162e51;
+  /* V2 AMENDMENT: was USWDS theme-color-primary-darker, "blue-warm-80v"
+     (#162e51) — same blue/blue-warm mismatch as --color-action-hover above.
+     Re-pulled from the same single blue family, one grade deeper still:
+     system-color-blue, vivid grade 80 ("blue-80v"). Source:
+     tokens/color/_blue.scss, retrieved 2026-08-18. */
+  --color-action-pressed: #112f4e;
 
   /* ------------------------------------------------------------------
      Color — status (meaning only, always paired with a text label)
@@ -170,10 +205,11 @@
 
   /* USWDS theme-focus-color default = "blue-40v". This is a non-text UI
      indicator (focus ring), so the WCAG 3:1 non-text floor applies, not
-     4.5:1; measures 2.81:1 against --color-surface alone but USWDS's own
-     focus mixin pairs it with a solid outline + offset against whichever
-     surface is under it, and it is never the sole affordance — the
-     focused element also changes per component spec. Source:
+     4.5:1; measures 2.95:1 against the v2 --color-surface above (recomputed
+     by hand with scripts/check-contrast.mjs's own luminance formula) but
+     USWDS's own focus mixin pairs it with a solid outline + offset against
+     whichever surface is under it, and it is never the sole affordance —
+     the focused element also changes per component spec. Source:
      settings/_settings-general.scss ($theme-focus-color: "blue-40v") +
      tokens/color/_blue.scss */
   --color-focus: #2491ff;
@@ -241,26 +277,38 @@
      literal enumerated list.
      ------------------------------------------------------------------ */
 
-  /* Interface font. USWDS's own default sans-serif typeface token,
-     $theme-font-type-sans, defaults to "source-sans-pro" out of the box
-     ($theme-font-role-ui and $theme-font-role-body both resolve to
-     "sans"). Stack per USWDS's own $font-stack-helvetica fallback chain.
-     No thin/light weights are used anywhere (see components.md).
-     Source: settings/_settings-typography.scss
-     ($theme-font-type-sans: "source-sans-pro", $theme-font-role-ui: "sans",
-     $theme-font-role-body: "sans") + tokens/font/typefaces.scss
-     ("source-sans-pro" → stack: $font-stack-helvetica) +
-     tokens/font/stacks.scss */
-  --font-ui: "Source Sans Pro Web", "Helvetica Neue", "Helvetica", "Roboto",
+  /* V2 AMENDMENT (direction.md v2 amendment #3, 2026-08-18): replaces the
+     original USWDS-default "source-sans-pro" pairing. The owner directed a
+     specific real pairing loaded via next/font: Public Sans for the
+     interface, IBM Plex Mono (or equivalent) for data/figures. Public Sans
+     is itself USWDS's OWN typeface (USWDS switched its default body font to
+     Public Sans in later releases — https://public-sans.digital.gov,
+     retrieved 2026-08-18) — choosing it keeps "the institutional register"
+     the amendment asks for, it is not a departure from the USWDS base
+     system, just a newer USWDS-native face than the v3.13.0 default this
+     project pinned in the original pass.
+
+     Delivery mechanism: next/font/google (app/layout.tsx) generates a CSS
+     custom property per font — --font-public-sans / --font-ibm-plex-mono —
+     applied on <html> via each font object's own `variable` option. This
+     tokens.css file references those generated variables with a full
+     static fallback chain, so components still resolve a real font even if
+     the generated variable is ever unavailable (e.g. a non-Next.js test
+     harness rendering this CSS in isolation). Fallback stacks are the same
+     realistic system-font chains used before this change. No thin/light
+     weights are used anywhere (see components.md); next/font is configured
+     with font-display: swap (app/layout.tsx) and explicit weights 400-700
+     only. */
+  --font-ui: var(--font-public-sans), "Helvetica Neue", "Helvetica", "Roboto",
     "Arial", sans-serif;
 
   /* Data font, for every number, ratio, currency value, and table column
-     (tabular figures) per direction.md → "Type". USWDS's named
-     "roboto-mono" typeface token. Source: tokens/font/typefaces.scss
-     ("roboto-mono" → stack: $font-stack-monospace) + tokens/font/stacks.scss
-     ($font-stack-monospace) */
-  --font-data: "Roboto Mono Web", "Bitstream Vera Sans Mono", "Consolas",
-    "Courier", monospace;
+     (tabular figures) per direction.md → "Type". IBM Plex Mono per the v2
+     amendment (IBM's own open-source mono face, ibm.com/plex, a real named
+     font with the tabular-figure support this token exists for — not
+     invented). Delivered the same way as --font-ui above. */
+  --font-data: var(--font-ibm-plex-mono), "Roboto Mono", "Bitstream Vera Sans Mono",
+    "Consolas", "Courier", monospace;
 
   /* ------------------------------------------------------------------
      Motion — ADDITIVE, V3 motion pass (2026-08-18). Not in the enumerated
@@ -294,4 +342,32 @@
      in app/capture/[id]/capture.module.css and app/login/page.module.css
      before this pass. */
   --motion-ease: ease-out;
+
+  /* ------------------------------------------------------------------
+     Entrance motion — ADDITIVE, design v2 pass (2026-08-18). A SEPARATE
+     category from the three tokens above, per direction.md's v2 amendment
+     #4: "text and surface entrance transitions are now permitted on
+     non-field surfaces (landing, home, dashboard, admin)... under ~300ms
+     feel." --motion-fast/--motion-base above are UNCHANGED and still
+     govern every functional state-change transition everywhere, including
+     inside these surfaces (pressed states, selection swaps) — these two
+     new tokens govern ONLY the mount-time fade-rise/stagger entrance built
+     with the `motion` package (docs/adr/0010-motion-dependency.md), never
+     used in src/core/capture/** or any field-flow route. Values are also
+     hardcoded as JS constants in src/shared/ui/Entrance.tsx and CountUp.tsx
+     (CSS custom properties cannot feed a JS animate() call's duration
+     option directly) — the JS constants carry a comment pointing back
+     here so the two can't silently drift.
+     ------------------------------------------------------------------ */
+
+  /* Duration for one fade-rise entrance step (opacity 0->1, translateY
+     ~12px->0). Chosen at the calm end of the amendment's "~300ms feel"
+     ceiling — still short enough to read as immediate, not a slow reveal. */
+  --motion-entrance-duration: 260ms;
+
+  /* Per-child delay for a staggered group (dashboard stat panels, home's
+     queued-assessment list, landing's fact list) — small enough that a
+     5-item list finishes staggering well under a second, large enough that
+     the stagger is actually visible instead of reading as simultaneous. */
+  --motion-entrance-stagger: 60ms;
 }
