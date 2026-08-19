@@ -32,7 +32,7 @@ export default async function NewEstimatePage({ params }: { params: Promise<{ cl
         <h1 className={styles.heading}>Attach a document</h1>
         <p className={styles.subhead}>
           Photograph or select a contractor repair estimate. Text is read automatically to pre-fill the next
-          screen — nothing is saved as a final value until you review and confirm it.
+          screen. Nothing is saved as a final value until you review and confirm it.
         </p>
       </div>
       <EstimateUploadFlow clientId={clientId} />

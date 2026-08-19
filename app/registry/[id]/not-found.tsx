@@ -14,7 +14,7 @@ export default function StructureNotFound() {
         <h1 className={styles.cardHeading}>Structure not found</h1>
         <p className={styles.dt}>
           No structure matches that record. It may have been removed, or the
-          link may be out of date — search again from the registry.
+          link may be out of date. Search again from the registry.
         </p>
       </div>
     </main>

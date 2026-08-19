@@ -34,7 +34,7 @@ export function OccupancyEditor({ structureId }: { structureId: string }) {
       }
       router.refresh();
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStatus("error");
     }
   }
@@ -42,7 +42,7 @@ export function OccupancyEditor({ structureId }: { structureId: string }) {
   return (
     <div>
       <p className={styles.occupancyPrompt}>
-        Not on file — set the occupancy type observed in the field.
+        Not on file. Set the occupancy type observed in the field.
       </p>
       <div className={styles.occupancyButtons}>
         <button

@@ -40,7 +40,7 @@ export default async function JurisdictionSettingsPage() {
         <p className={styles.eyebrow}>Administration</p>
         <h1 className={styles.heading}>{settings ? settings.jurisdictionName : "Jurisdiction"} settings</h1>
         <p className={styles.subhead}>
-          Ordinance citation, appeal window, and letterhead — used by every determination letter.
+          Ordinance citation, appeal window, and letterhead. Used by every determination letter.
         </p>
       </div>
 

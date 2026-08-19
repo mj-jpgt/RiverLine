@@ -40,7 +40,7 @@ export default async function CostTablesPage() {
         <h1 className={styles.heading}>Cost tables</h1>
         <p className={styles.subhead}>
           Every calculation stamps the cost table version it used, so a contested determination stays reproducible.
-          Loading a new table never deletes or edits an existing one — it inserts a new version.
+          Loading a new table never deletes or edits an existing one. It inserts a new version.
         </p>
       </div>
 

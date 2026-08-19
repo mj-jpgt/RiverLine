@@ -30,7 +30,7 @@ export default async function EstimatesIndexPage() {
         <h1 className={styles.heading}>Find an assessment</h1>
         <p className={styles.subhead}>
           Attach a contractor repair estimate to a completed assessment. This is
-          reference data for the official&apos;s review — value and cost overrides in
+          reference data for the official&apos;s review. Value and cost overrides in
           the determination flow remain the mechanism of record.
         </p>
       </div>

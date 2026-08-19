@@ -136,7 +136,7 @@ export function CostTableForm() {
     const payload = mode === "form" ? buildFormPayload() : buildJsonPayload();
     if (payload === null) {
       if (mode === "form") {
-        setErrorMessage("Every element needs a number — none can be left blank.");
+        setErrorMessage("Every element needs a number. None can be left blank.");
       }
       return;
     }
@@ -167,7 +167,7 @@ export function CostTableForm() {
       setSuccessVersion(body.version);
       router.refresh();
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStatus("error");
     }
   }
@@ -178,7 +178,7 @@ export function CostTableForm() {
         <p className={styles.noticeHeading}>FEMA publishes no unit-cost dollar figures</p>
         <p className={styles.noticeText}>
           The SDE 3.0 manual states base cost per square foot must come from the jurisdiction&apos;s own chosen
-          cost-estimating guide, contractor estimates, or local permit data — never from this tool. Enter the
+          cost-estimating guide, contractor estimates, or local permit data, never from this tool. Enter the
           jurisdiction&apos;s real figures below and record where they came from in the source citation. See
           docs/BLOCKERS.md B1.
         </p>
@@ -205,7 +205,7 @@ export function CostTableForm() {
 
       <div className={styles.formRow}>
         <label className={styles.formLabel} htmlFor="source-citation">
-          Source citation (required) — name the guide, edition, and page
+          Source citation (required): name the guide, edition, and page
         </label>
         <textarea
           id="source-citation"
@@ -214,11 +214,11 @@ export function CostTableForm() {
           disabled={status === "saving"}
           onChange={(e) => setSourceCitation(e.target.value)}
           onBlur={() => setTouchedCitation(true)}
-          placeholder="e.g. [Jurisdiction's chosen cost-estimating guide], edition, page — never left blank."
+          placeholder="e.g. [Jurisdiction's chosen cost-estimating guide], edition, page. Never left blank."
         />
         {citationMissing ? (
           <p className={styles.fieldError} role="alert">
-            The source citation cannot be blank — a cost table without a citation is rejected.
+            The source citation cannot be blank. A cost table without a citation is rejected.
           </p>
         ) : null}
       </div>
@@ -264,7 +264,7 @@ export function CostTableForm() {
 
       {mode === "form" ? (
         <>
-          <h3 className={styles.elementGroupHeading}>Residential — $ per square foot, all 12 required</h3>
+          <h3 className={styles.elementGroupHeading}>Residential: $ per square foot, all 12 required</h3>
           <div className={styles.elementGrid}>
             {RESIDENTIAL_ELEMENTS.map((el) => (
               <div className={styles.elementField} key={el.code}>
@@ -296,7 +296,7 @@ export function CostTableForm() {
             ))}
           </div>
 
-          <h3 className={styles.elementGroupHeading}>Non-residential — $ per square foot, all 7 required</h3>
+          <h3 className={styles.elementGroupHeading}>Non-residential: $ per square foot, all 7 required</h3>
           <div className={styles.elementGrid}>
             {NON_RESIDENTIAL_ELEMENTS.map((el) => (
               <div className={styles.elementField} key={el.code}>
@@ -331,7 +331,7 @@ export function CostTableForm() {
       ) : (
         <div className={styles.formRowWide}>
           <label className={styles.formLabel} htmlFor="json-payload">
-            Cost table JSON — must contain all 12 residential + all 7 non-residential element codes
+            Cost table JSON: must contain all 12 residential and all 7 non-residential element codes
           </label>
           <p className={styles.formHint}>
             Matches the engine&apos;s cost-table shape: <code>{"{ residential: {...}, non_residential: {...} }"}</code>{" "}

@@ -65,7 +65,7 @@ export default async function ConfirmEstimatePage({
         ← Back to estimates
       </Link>
       <div className={styles.header}>
-        <p className={styles.eyebrow}>Contractor estimates — version {detail.version}</p>
+        <p className={styles.eyebrow}>Contractor estimates, version {detail.version}</p>
         <h1 className={styles.heading}>Review and confirm</h1>
         <p className={styles.subhead}>
           Nothing here is saved as a final value until you confirm it. Verify each amount against the source

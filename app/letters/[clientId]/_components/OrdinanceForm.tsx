@@ -47,7 +47,7 @@ export function OrdinanceForm({ clientId, jurisdictionName }: { clientId: string
       setStatus("idle");
       router.refresh();
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStatus("error");
     }
   }
@@ -72,12 +72,12 @@ export function OrdinanceForm({ clientId, jurisdictionName }: { clientId: string
       />
       {citationMissing ? (
         <p className={styles.fieldError} role="alert">
-          The ordinance citation is required — it cannot be left blank.
+          The ordinance citation is required. It cannot be left blank.
         </p>
       ) : null}
 
       <label className={styles.formLabel} htmlFor="appeal-window-days">
-        Appeal window (days) — optional
+        Appeal window (days), optional
       </label>
       <input
         id="appeal-window-days"

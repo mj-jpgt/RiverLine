@@ -395,7 +395,7 @@ test.describe("T-W5 admin console — cost tables, jurisdiction settings, readin
 
     // Readiness panel: OK now, with the active version named.
     await gotoResilient(page, "/admin");
-    await expect(page.getByText(`OK — active version ${COST_TABLE_VERSION}`)).toBeVisible();
+    await expect(page.getByText(`OK, active version ${COST_TABLE_VERSION}`)).toBeVisible();
 
     // The SAME earlier assessment — blocked before — now produces a real
     // calculation on revisit (no calculations row existed yet, so the page
@@ -439,8 +439,8 @@ test.describe("T-W5 admin console — cost tables, jurisdiction settings, readin
     expect(audit.rows.length).toBe(1);
 
     await gotoResilient(page, "/admin");
-    await expect(page.getByText("OK — on file")).toBeVisible();
-    await expect(page.getByText("OK — configured")).toBeVisible();
+    await expect(page.getByText("OK, on file")).toBeVisible();
+    await expect(page.getByText("OK, configured")).toBeVisible();
     await logout(page);
 
     // Adopt the determination (official role) so /letters/[clientId] has

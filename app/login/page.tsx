@@ -10,7 +10,7 @@ export default function LoginPage() {
         <h1 className={styles.heading}>Sign in</h1>
         <p className={styles.subhead}>
           Enter the email address on file with your jurisdiction. We&apos;ll send a
-          one-time sign-in link — no password required.
+          one-time sign-in link. No password required.
         </p>
         <LoginForm />
       </div>

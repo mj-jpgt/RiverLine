@@ -64,7 +64,7 @@ export function JurisdictionSettingsForm({ initial }: { initial: JurisdictionSet
       setStatus("success");
       router.refresh();
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStatus("error");
     }
   }
@@ -76,7 +76,7 @@ export function JurisdictionSettingsForm({ initial }: { initial: JurisdictionSet
           Ordinance citation (verbatim, required)
         </label>
         <p className={styles.formHint}>
-          Paste the jurisdiction&apos;s own adopted ordinance text exactly as written — this goes into determination
+          Paste the jurisdiction&apos;s own adopted ordinance text exactly as written. This goes into determination
           letters verbatim. Never paraphrase or invent. See docs/BLOCKERS.md B2.
         </p>
         <textarea
@@ -91,14 +91,14 @@ export function JurisdictionSettingsForm({ initial }: { initial: JurisdictionSet
         />
         {citationMissing ? (
           <p className={styles.fieldError} role="alert">
-            The ordinance citation is required — it cannot be left blank.
+            The ordinance citation is required. It cannot be left blank.
           </p>
         ) : null}
       </div>
 
       <div className={styles.formRow}>
         <label className={styles.formLabel} htmlFor="appeal-window-days">
-          Appeal window (days) — leave blank to unset
+          Appeal window (days). Leave blank to unset
         </label>
         <input
           id="appeal-window-days"
@@ -118,7 +118,7 @@ export function JurisdictionSettingsForm({ initial }: { initial: JurisdictionSet
 
       <div className={styles.formRow}>
         <label className={styles.formLabel} htmlFor="letterhead-name">
-          Letterhead name — shown at the top of determination letters (optional)
+          Letterhead name (shown at the top of determination letters, optional)
         </label>
         <input
           id="letterhead-name"
@@ -131,7 +131,7 @@ export function JurisdictionSettingsForm({ initial }: { initial: JurisdictionSet
 
       <div className={styles.formRowWide}>
         <label className={styles.formLabel} htmlFor="address-lines">
-          Letterhead address — one line per row (optional)
+          Letterhead address (one line per row, optional)
         </label>
         <textarea
           id="address-lines"
@@ -144,7 +144,7 @@ export function JurisdictionSettingsForm({ initial }: { initial: JurisdictionSet
 
       <div className={styles.formRowWide}>
         <label className={styles.formLabel} htmlFor="icc-text">
-          Increased Cost of Compliance (ICC) paragraph — optional
+          Increased Cost of Compliance (ICC) paragraph (optional)
         </label>
         <p className={styles.formHint}>
           The jurisdiction supplies this text; it is never authored by this tool. Left blank, letters omit the ICC

@@ -174,7 +174,7 @@ test.describe("T-W2 A4 contractor-estimate intake — OCR-assisted, human-confir
     const clientId = await seedAssessment("manual-house");
     await page.goto(`/estimates/${encodeURIComponent(clientId)}/new`);
     await page.getByLabel("Choose photo or file").setInputFiles(MISMATCH_FIXTURE);
-    await page.getByRole("button", { name: "Skip automatic text reading — enter values by hand" }).click();
+    await page.getByRole("button", { name: "Skip automatic text reading. Enter values by hand" }).click();
 
     await expect(page).toHaveURL(/\/estimates\/[^/]+\/confirm\/[0-9a-f-]+$/, { timeout: 30000 });
     await expect(page.getByRole("heading", { name: "Manual entry" })).toBeVisible();

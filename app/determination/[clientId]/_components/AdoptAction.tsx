@@ -34,7 +34,7 @@ export function AdoptAction({ clientId }: { clientId: string }) {
       }
       router.refresh();
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStatus("error");
     }
   }
@@ -59,7 +59,7 @@ export function AdoptAction({ clientId }: { clientId: string }) {
       <p className={styles.confirmHeading}>Confirm adoption</p>
       <p className={styles.confirmBody}>
         Adopting this determination records it as the official finding of record, with your user account and the
-        current time. <strong>This cannot be undone</strong> — a mistaken determination must be corrected through the
+        current time. <strong>This cannot be undone.</strong> A mistaken determination must be corrected through the
         Supersede action afterward, which creates a new draft rather than editing this one.
       </p>
       <div className={styles.overrideActions}>

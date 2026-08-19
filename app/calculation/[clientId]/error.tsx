@@ -22,8 +22,8 @@ export default function CalculationPageError({
       </Link>
       <div className={styles.errorPanel} role="alert">
         <p className={styles.statePanelText}>
-          The calculation could not load right now. No calculation was silently produced or lost —
-          check your connection and try again.
+          The calculation could not load right now. No calculation was silently produced or lost.
+          Check your connection and try again.
         </p>
         <button type="button" onClick={() => reset()} className={styles.retryButton}>
           Try again

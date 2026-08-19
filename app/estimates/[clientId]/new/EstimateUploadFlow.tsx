@@ -74,7 +74,7 @@ export function EstimateUploadFlow({ clientId }: { clientId: string }) {
       const body = (await res.json()) as { estimateId: string };
       router.push(`/estimates/${encodeURIComponent(clientId)}/confirm/${body.estimateId}`);
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStage("error");
     }
   }
@@ -152,7 +152,7 @@ export function EstimateUploadFlow({ clientId }: { clientId: string }) {
           onChange={(e) => handleFilesChosen(e.target.files)}
         />
         <p className={styles.uploadHint}>
-          One or more photos of the same estimate document — add a page for each additional page of a multi-page
+          One or more photos of the same estimate document. Add a page for each additional page of a multi-page
           estimate.
         </p>
       </div>
@@ -183,7 +183,7 @@ export function EstimateUploadFlow({ clientId }: { clientId: string }) {
             Read text automatically and continue
           </button>
           <button type="button" className={styles.secondaryButton} onClick={handleSkipOcr}>
-            Skip automatic text reading — enter values by hand
+            Skip automatic text reading. Enter values by hand
           </button>
         </>
       ) : null}
@@ -192,7 +192,7 @@ export function EstimateUploadFlow({ clientId }: { clientId: string }) {
         <div className={styles.progressPanel} role="status" aria-live="polite">
           <p className={styles.progressText}>
             {progress
-              ? `Reading page ${progress.pageIndex + 1} of ${progress.pageCount} — ${progress.status}…`
+              ? `Reading page ${progress.pageIndex + 1} of ${progress.pageCount}: ${progress.status}…`
               : "Preparing the document…"}
           </p>
           <progress className={styles.progressBar} value={progress?.progress ?? 0} max={1} />

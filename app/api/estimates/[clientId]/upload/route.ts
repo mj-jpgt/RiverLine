@@ -113,7 +113,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cli
     }
     if (result.status === "hash_mismatch") {
       return NextResponse.json(
-        { error: `Page ${result.pageIndex + 1} sha256 mismatch — refusing to store unverified bytes.` },
+        { error: `Page ${result.pageIndex + 1} sha256 mismatch. Refusing to store unverified bytes.` },
         { status: 400 },
       );
     }
@@ -122,7 +122,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cli
     }
     if (result.status === "invalid_image_type") {
       return NextResponse.json(
-        { error: `Page ${result.pageIndex + 1} is not a valid image — refusing to store unverified bytes.` },
+        { error: `Page ${result.pageIndex + 1} is not a valid image. Refusing to store unverified bytes.` },
         { status: 400 },
       );
     }

@@ -74,7 +74,7 @@ export function OverrideElementControl({
       setStatus("idle");
       router.refresh();
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStatus("error");
     }
   }

@@ -24,7 +24,7 @@ const bodySchema = z.object({
 const ERROR_MESSAGES: Record<string, string> = {
   version_required: "A version label is required.",
   citation_required: "The source citation cannot be blank.",
-  citation_too_short: "The source citation is too short to be a real source — name the guide, edition, and page.",
+  citation_too_short: "The source citation is too short to be a real source. Name the guide, edition, and page.",
   effective_date_invalid: "Effective date must be a valid date (YYYY-MM-DD).",
   payload_invalid: "The per-element costs are invalid.",
   version_exists: "A cost table with this version label already exists. Use a different version label.",

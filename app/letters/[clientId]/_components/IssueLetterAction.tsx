@@ -30,7 +30,7 @@ export function IssueLetterAction({ clientId }: { clientId: string }) {
       }
       router.refresh();
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStatus("error");
     }
   }
@@ -54,7 +54,7 @@ export function IssueLetterAction({ clientId }: { clientId: string }) {
     <div className={styles.confirmPanel} role="alertdialog" aria-label="Confirm issue letter">
       <p className={styles.confirmHeading}>Confirm issue letter</p>
       <p className={styles.statePanelText}>
-        Issuing creates the permanent record of this letter — an archived copy of the exact text generated now. This
+        Issuing creates the permanent record of this letter: an archived copy of the exact text generated now. This
         cannot be undone.
       </p>
       <div className={styles.actionsRow}>

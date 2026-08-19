@@ -52,7 +52,7 @@ export function EstimatesSearch() {
         setState("loaded");
       } catch {
         if (requestId !== requestIdRef.current) return;
-        setErrorMessage("Network error — check your connection and try again.");
+        setErrorMessage("Network error. Check your connection and try again.");
         setState("error");
       }
     }, query.trim().length === 0 ? 0 : SEARCH_DEBOUNCE_MS);

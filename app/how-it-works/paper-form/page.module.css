@@ -1,0 +1,217 @@
+/* Print-first worksheet. docs/design/direction.md "Print": black on white,
+   no background fills, no color-dependent information. Screen chrome
+   (breadcrumb, print button, hint text) is wrapped in .screenOnly and
+   hidden entirely at print time; .page is the actual printable document
+   and stays visually plain (system-ui, black text, white background) on
+   screen too, so what you see is what prints. */
+
+.main {
+  background: white;
+  color: black;
+  min-height: 100dvh;
+}
+
+.screenOnly {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-5) 0;
+  font-family: var(--font-ui);
+}
+
+.breadcrumb {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.breadcrumb a {
+  color: var(--color-action);
+}
+
+.printButton {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-6);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-surface-raised);
+  background: var(--color-action);
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.printButton:hover {
+  background: var(--color-action-hover);
+}
+
+.printButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.screenHint {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+  font-family: Georgia, "Times New Roman", serif;
+  color: black;
+  background: white;
+}
+
+.header {
+  border-bottom: 2px solid black;
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+.structureHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fieldLabel {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.writeLine {
+  display: block;
+  height: 1.4em;
+  border-bottom: 1px solid black;
+}
+
+.checkboxLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+}
+
+.checkbox {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 1.5px solid black;
+  flex: none;
+}
+
+.instructions {
+  font-size: var(--text-base);
+  line-height: 1.55;
+  margin-bottom: var(--space-6);
+}
+
+.elementSection {
+  margin-bottom: var(--space-6);
+  break-inside: avoid;
+}
+
+.elementHeading {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin: 0 0 var(--space-3);
+  border-bottom: 1px solid black;
+  padding-bottom: var(--space-2);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table th,
+.table td {
+  border: 1px solid black;
+  padding: var(--space-2);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.elementCol {
+  text-align: left;
+  width: 30%;
+}
+
+.pctCol {
+  width: 8%;
+}
+
+.otherCol {
+  width: 14%;
+}
+
+.photoCol {
+  width: 10%;
+}
+
+.table .writeLine {
+  height: 1.2em;
+  border-bottom: 1px solid black;
+}
+
+.exteriorPhoto {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.footerNote {
+  font-size: var(--text-sm);
+  border-top: 1px solid black;
+  padding-top: var(--space-4);
+  line-height: 1.5;
+}
+
+@media print {
+  .screenOnly {
+    display: none;
+  }
+  .page {
+    padding: 0;
+    max-width: none;
+  }
+  .main {
+    min-height: 0;
+  }
+}

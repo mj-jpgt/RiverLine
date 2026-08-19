@@ -41,7 +41,7 @@ export function LoginForm() {
 
       setStatus("sent");
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setStatus("error");
     }
   }
@@ -98,7 +98,7 @@ export function LoginForm() {
 
       <p className={styles.helpText}>
         No account? RiverLine accounts are issued by your jurisdiction
-        administrator — there is no self-signup.
+        administrator. There is no self-signup.
       </p>
     </form>
   );

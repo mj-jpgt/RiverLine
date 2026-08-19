@@ -75,7 +75,7 @@ export default async function LetterPage({ params }: { params: Promise<{ clientI
         <div className={styles.statePanel}>
           <p className={styles.statePanelText}>
             The adopted determination&apos;s calculated ratio is in the borderline range and does not resolve to a
-            definite substantial-damage finding. A letter requires a definite SD / NOT_SD result — resolve this
+            definite substantial-damage finding. A letter requires a definite SD / NOT_SD result. Resolve this
             determination (override an input, or supersede with a corrected calculation) before a letter can be
             generated.
           </p>
@@ -91,7 +91,7 @@ export default async function LetterPage({ params }: { params: Promise<{ clientI
             <code className={styles.inlineCode}>docs/BLOCKERS.md</code> B2.
           </p>
           <p className={styles.statePanelText}>
-            RiverLine never generates, guesses, or fills in placeholder ordinance text — the citation quoted in a
+            RiverLine never generates, guesses, or fills in placeholder ordinance text. The citation quoted in a
             determination letter must be the jurisdiction&apos;s own verbatim, human-entered text.
           </p>
           {canEditOrdinance ? (

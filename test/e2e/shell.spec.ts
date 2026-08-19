@@ -74,7 +74,7 @@ test.describe("T-W1 app shell", () => {
 
     await expect(page.getByRole("heading", { name: "Determination review" })).toBeVisible();
     await expect(page.getByText("Awaiting review")).toBeVisible();
-    await expect(page.getByText("Borderline — requires review")).toBeVisible();
+    await expect(page.getByText("Borderline, requires review")).toBeVisible();
     await expect(page.getByRole("link", { name: "Determination queue" })).toBeVisible();
 
     await expect(page.getByRole("heading", { name: "Jurisdiction dashboard" })).toBeVisible();

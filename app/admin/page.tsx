@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
+import { SESSION_COOKIE_NAME, verifySessionCookie, requireActiveRole, AuthError } from "@/core/auth";
 import { getReadinessStatus } from "@/core/admin";
 import styles from "./shared.module.css";
 
@@ -17,7 +17,10 @@ export default async function AdminPage() {
 
   let guarded;
   try {
-    guarded = requireRole(session, ["admin"]);
+    // G3: requireActiveRole (not requireRole) — a deactivated admin's
+    // signed session cookie can still verify (sessions are stateless), so
+    // this is the request-time DB check that refuses it anyway.
+    guarded = await requireActiveRole(session, ["admin"]);
   } catch (err) {
     if (err instanceof AuthError) redirect("/login");
     throw err;
@@ -53,7 +56,7 @@ export default async function AdminPage() {
               {readiness.costTableLoaded ? (
                 <span className={styles.statusBadgeOk}>
                   <span className={styles.statusDot} aria-hidden="true" />
-                  OK — active version {readiness.activeCostTableVersion}
+                  OK, active version {readiness.activeCostTableVersion}
                 </span>
               ) : (
                 <>
@@ -62,8 +65,8 @@ export default async function AdminPage() {
                     NOT SET
                   </span>
                   <p className={styles.readinessBlockedText}>
-                    Calculations cannot run — every assessment will show &quot;no cost table loaded&quot; (see
-                    docs/BLOCKERS.md B1) until a table is loaded here.
+                    Calculations cannot run. Every assessment will show &quot;no cost table loaded&quot; until a
+                    table is loaded here. See docs/BLOCKERS.md B1.
                   </p>
                 </>
               )}
@@ -79,7 +82,7 @@ export default async function AdminPage() {
               {readiness.ordinanceCitationSet ? (
                 <span className={styles.statusBadgeOk}>
                   <span className={styles.statusDot} aria-hidden="true" />
-                  OK — on file
+                  OK, on file
                 </span>
               ) : (
                 <>
@@ -88,8 +91,8 @@ export default async function AdminPage() {
                     NOT SET
                   </span>
                   <p className={styles.readinessBlockedText}>
-                    Letters cannot be issued — determination letters refuse to generate (see docs/BLOCKERS.md B2)
-                    until the jurisdiction&apos;s ordinance citation is entered here.
+                    Letters cannot be issued. Determination letters refuse to generate until the
+                    jurisdiction&apos;s ordinance citation is entered here. See docs/BLOCKERS.md B2.
                   </p>
                 </>
               )}
@@ -105,7 +108,7 @@ export default async function AdminPage() {
               {readiness.appealWindowSet ? (
                 <span className={styles.statusBadgeOk}>
                   <span className={styles.statusDot} aria-hidden="true" />
-                  OK — configured
+                  OK, configured
                 </span>
               ) : (
                 <>
@@ -114,7 +117,7 @@ export default async function AdminPage() {
                     NOT SET
                   </span>
                   <p className={styles.readinessBlockedText}>
-                    Letters will omit an appeal deadline — appeal_deadline_date stays unset on every determination
+                    Letters will omit an appeal deadline. appeal_deadline_date stays unset on every determination
                     until an appeal window (in days) is configured here.
                   </p>
                 </>
@@ -122,6 +125,19 @@ export default async function AdminPage() {
             </div>
             <Link href="/admin/jurisdiction" className={styles.secondaryButton}>
               {readiness.appealWindowSet ? "Edit jurisdiction settings" : "Set appeal window"}
+            </Link>
+          </div>
+
+          <div className={styles.readinessRow}>
+            <div className={styles.readinessMain}>
+              <p className={styles.readinessLabel}>Team</p>
+              <span className={styles.statusBadgeOk}>
+                <span className={styles.statusDot} aria-hidden="true" />
+                {`${readiness.team.activeTotal} active user${readiness.team.activeTotal === 1 ? "" : "s"} (${readiness.team.activeAssessors} assessor${readiness.team.activeAssessors === 1 ? "" : "s"}, ${readiness.team.activeOfficials} official${readiness.team.activeOfficials === 1 ? "" : "s"})`}
+              </span>
+            </div>
+            <Link href="/admin/users" className={styles.secondaryButton}>
+              Manage team
             </Link>
           </div>
         </div>

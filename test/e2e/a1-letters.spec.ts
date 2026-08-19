@@ -238,7 +238,7 @@ test.describe("T-A1 determination letters — honest refusal state + issue flow"
 
     await expect(page.getByText("Letter generation unavailable")).toBeVisible();
     await page.getByLabel("Ordinance citation (verbatim, required)").fill(TEST_CITATION);
-    await page.getByLabel("Appeal window (days) — optional").fill("30");
+    await page.getByLabel("Appeal window (days), optional").fill("30");
     await page.getByRole("button", { name: "Save ordinance citation" }).click();
 
     await expect(page.getByRole("button", { name: "Issue letter" })).toBeVisible({ timeout: 10000 });

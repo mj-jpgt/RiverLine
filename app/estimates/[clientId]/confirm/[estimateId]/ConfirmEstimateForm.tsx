@@ -176,7 +176,7 @@ export function ConfirmEstimateForm({
       }
       router.push(`/estimates/${encodeURIComponent(clientId)}`);
     } catch {
-      setErrorMessage("Network error — check your connection and try again.");
+      setErrorMessage("Network error. Check your connection and try again.");
       setSubmitState("error");
     }
   }
@@ -443,7 +443,7 @@ export function ConfirmEstimateForm({
           onChange={(e) => setScopeReviewed(e.target.checked)}
         />
         <span className={styles.checkboxText}>
-          This estimate has been reviewed for disaster-related scope only — any unrelated repair or remodeling
+          This estimate has been reviewed for disaster-related scope only. Any unrelated repair or remodeling
           items have been excluded.
         </span>
       </label>

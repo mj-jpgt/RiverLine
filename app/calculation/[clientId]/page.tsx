@@ -21,7 +21,7 @@ import styles from "./calculation.module.css";
 // rather than silently computing a wrong or fabricated number.
 
 const VALUE_SOURCE_LABELS: Record<string, string> = {
-  assessed_improvement: "Assessed improvement value — market value pending, see official",
+  assessed_improvement: "Assessed improvement value (market value pending, see official)",
   assessed_total: "Assessed total value (land + improvements)",
   assessed_adjusted: "Assessed value, adjusted",
   appraisal: "Independent appraisal",
@@ -85,7 +85,7 @@ function NoCostTableState({ structure }: { structure: StructureValueInfo }) {
         <h2 className={styles.blockedHeading}>No cost table loaded</h2>
         <p className={styles.blockedText}>
           This jurisdiction has no cost table on file yet, so the 50%-rule calculation cannot run. The assessment
-          itself is saved — nothing is lost. A cost-estimating guide must be selected and loaded before a
+          itself is saved. Nothing is lost. A cost-estimating guide must be selected and loaded before a
           calculation can be produced. See <span className={styles.blockedCode}>docs/BLOCKERS.md B1</span> for what
           is blocking this and the recommended next step.
         </p>
@@ -136,7 +136,7 @@ function CalculationDetail({ view, clientId }: { view: CalculationView; clientId
       {priorCalculationCount > 0 ? (
         <p className={styles.historyNote}>
           This is calculation #{priorCalculationCount + 1} for this assessment. Earlier calculations remain on file
-          (calculations are never edited or deleted — AGENTS.md rule 10).
+          (calculations are never edited or deleted, AGENTS.md rule 10).
         </p>
       ) : null}
 
@@ -152,7 +152,7 @@ function CalculationDetail({ view, clientId }: { view: CalculationView; clientId
         </p>
         {calculation.thresholdResult === "BORDERLINE" ? (
           <p className={styles.borderlineNote}>
-            Within calculation tolerance — requires official review.
+            Within calculation tolerance. Requires official review.
           </p>
         ) : null}
       </section>

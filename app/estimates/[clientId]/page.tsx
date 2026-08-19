@@ -64,7 +64,7 @@ export default async function AssessmentEstimatesPage({
         <div className={styles.statePanel}>
           <p className={styles.statePanelText}>
             No contractor estimate has been attached to this assessment yet. Attach one to pre-fill candidate line
-            items and a total for the official to reference — OCR extraction is optional and every value still
+            items and a total for the official to reference. OCR extraction is optional, and every value still
             requires human confirmation before it is stored.
           </p>
         </div>
@@ -76,7 +76,7 @@ export default async function AssessmentEstimatesPage({
               <div className={styles.cardHeadRow}>
                 <p className={styles.versionLabel}>
                   Version {v.version}
-                  {isSuperseded ? <span className={styles.supersededTag}> — superseded</span> : null}
+                  {isSuperseded ? <span className={styles.supersededTag}> (superseded)</span> : null}
                 </p>
                 {v.isConfirmed ? (
                   <span className={v.provenance === "ocr_assisted" ? styles.provenanceOcr : styles.provenanceManual}>
@@ -90,7 +90,7 @@ export default async function AssessmentEstimatesPage({
               {v.confirmedTotal !== null ? (
                 <p className={styles.totalValue}>{formatCurrency(v.confirmedTotal)}</p>
               ) : (
-                <p className={styles.metaLine}>Not yet confirmed — no total on record.</p>
+                <p className={styles.metaLine}>Not yet confirmed. No total on record.</p>
               )}
 
               <p className={styles.metaLine}>Uploaded {formatDate(v.createdAtIso)}</p>
@@ -103,7 +103,7 @@ export default async function AssessmentEstimatesPage({
 
               {v.sanityFlag ? (
                 <p className={styles.sanityWarning}>
-                  This total exceeds 3× the structure&apos;s assessed improvement value — flagged for manual review.
+                  This total exceeds 3× the structure&apos;s assessed improvement value. Flagged for manual review.
                 </p>
               ) : null}
 
@@ -135,7 +135,7 @@ export default async function AssessmentEstimatesPage({
 
       <p className={styles.referenceNote}>
         These estimates are reference data for the official&apos;s review. They do not change the calculated repair
-        cost or ratio — an official records a value or cost override directly in the determination review screen if
+        cost or ratio. An official records a value or cost override directly in the determination review screen if
         a contractor estimate changes their finding.
       </p>
     </main>

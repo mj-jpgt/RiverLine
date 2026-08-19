@@ -18,7 +18,7 @@ const bodySchema = z.object({ confirmed: z.literal(true) });
 const ERROR_MESSAGES: Record<string, string> = {
   confirmation_required: "Adoption requires explicit confirmation.",
   not_found: "Assessment not found.",
-  no_calculation: "No calculation exists yet for this assessment — nothing to adopt.",
+  no_calculation: "No calculation exists yet for this assessment. There is nothing to adopt.",
   already_adopted: "This determination has already been adopted. Use Supersede to issue a corrected one.",
 };
 

@@ -44,7 +44,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ clie
     }
     if (result.status === "no_calculation") {
       return NextResponse.json(
-        { error: "No calculation exists yet for this assessment — nothing to export." },
+        { error: "No calculation exists yet for this assessment. There is nothing to export." },
         { status: 409 },
       );
     }
