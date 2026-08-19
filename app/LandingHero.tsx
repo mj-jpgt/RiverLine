@@ -23,8 +23,8 @@ import styles from "./page.module.css";
 
 const FACTS: { label: string; value: string }[] = [
   { label: "Used by", value: "Jurisdiction assessors and floodplain officials" },
-  { label: "Decision-maker", value: "The local official — this tool proposes, it never adopts" },
-  { label: "Access", value: "Jurisdiction-issued accounts only — no self-signup" },
+  { label: "Decision maker", value: "The local official. This tool proposes, the official adopts." },
+  { label: "Access", value: "Jurisdiction-issued accounts only. No self-signup." },
 ];
 
 export function LandingHero() {
