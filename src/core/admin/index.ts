@@ -13,8 +13,23 @@
 // no precedent for holding tenant-scoped SQL; putting DB queries there
 // would be the first exception to that pattern. See
 // docs/journal/2026-08-17-w5-admin.md for the fuller justification.
-export { getCostTables, getActiveCostTableVersion, getJurisdictionSettings, getReadinessStatus } from "./queries";
-export { insertCostTable, updateJurisdictionSettings } from "./actions";
+export {
+  getCostTables,
+  getActiveCostTableVersion,
+  getJurisdictionSettings,
+  getReadinessStatus,
+  getTeamSummary,
+  listUsers,
+} from "./queries";
+export {
+  insertCostTable,
+  updateJurisdictionSettings,
+  createUser,
+  deactivateUser,
+  reactivateUser,
+  changeUserRole,
+  generateSignInLink,
+} from "./actions";
 export {
   RESIDENTIAL_CODES,
   NON_RESIDENTIAL_CODES,
@@ -25,7 +40,17 @@ export {
   isValidEffectiveDateIso,
   parseCostTablePayload,
   costTablePayloadSchema,
+  normalizeEmail,
+  isValidEmail,
+  isValidUserRole,
 } from "./pure";
+// ROLE_DESCRIPTIONS/ROLES/UserRole: defined once in src/shared/roles.ts
+// (client-bundle-safe — see that file's comment) and re-exported here for
+// server-side consumers (app/admin/users/page.tsx, src/core/admin's own
+// actions.ts/queries.ts). "use client" components import
+// @/shared/roles directly, never through this barrel, so adding a new
+// pg-touching export here in the future cannot break their build again.
+export { ROLE_DESCRIPTIONS, ROLES } from "@/shared/roles";
 export type {
   CostTableListRow,
   CostTablePayload,
@@ -35,4 +60,14 @@ export type {
   UpdateJurisdictionSettingsInput,
   UpdateJurisdictionSettingsResult,
   ReadinessStatus,
+  UserRole,
+  UserListRow,
+  TeamSummary,
+  CreateUserInput,
+  CreateUserResult,
+  DeactivateUserResult,
+  ReactivateUserResult,
+  ChangeUserRoleInput,
+  ChangeUserRoleResult,
+  GenerateSignInLinkResult,
 } from "./types";

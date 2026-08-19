@@ -88,4 +88,72 @@ export interface ReadinessStatus {
   activeCostTableVersion: string | null;
   ordinanceCitationSet: boolean;
   appealWindowSet: boolean;
+  /** G3 addition: team headcount, for the "Team: N active users (M
+   * assessors, K officials)" readiness row. */
+  team: TeamSummary;
 }
+
+// ---------------------------------------------------------------------------
+// G3: team user management (schema/core.sql users table — id, email,
+// jurisdiction_id, role; FROZEN — plus the additive
+// migrations/0007_users_deactivated.sql users.deactivated_at).
+// ---------------------------------------------------------------------------
+
+// ROLES/UserRole live in src/shared/roles.ts (not defined here) so a "use
+// client" component can import them without pulling this family's
+// DB-touching queries.ts/actions.ts (and transitively `pg`) into the
+// client bundle — see that file's comment for the full reasoning.
+// Re-imported (for local use in this file) and re-exported (so every
+// existing server-side consumer of `@/core/admin`'s ROLES/UserRole is
+// unaffected) from that one shared definition.
+import { ROLES } from "@/shared/roles";
+import type { UserRole } from "@/shared/roles";
+export { ROLES };
+export type { UserRole };
+
+/** One row from users, as listed for /admin/users. */
+export interface UserListRow {
+  id: string;
+  email: string;
+  role: UserRole;
+  createdAtIso: string;
+  /** null = active. Non-null = deactivated at this timestamp. */
+  deactivatedAtIso: string | null;
+}
+
+/** Headcount for the /admin readiness panel's "Team" row. Active = users
+ * whose deactivated_at is null. */
+export interface TeamSummary {
+  activeTotal: number;
+  activeAdmins: number;
+  activeAssessors: number;
+  activeOfficials: number;
+  activeViewers: number;
+}
+
+export interface CreateUserInput {
+  email: string;
+  role: UserRole;
+}
+
+export type CreateUserResult =
+  | { ok: true; user: UserListRow }
+  | { ok: false; error: "email_required" | "email_invalid" | "role_invalid" | "email_exists" };
+
+export type DeactivateUserResult =
+  | { ok: true }
+  | { ok: false; error: "not_found" | "cannot_act_on_self" | "already_deactivated" | "last_admin" };
+
+export type ReactivateUserResult = { ok: true } | { ok: false; error: "not_found" | "already_active" };
+
+export interface ChangeUserRoleInput {
+  role: UserRole;
+}
+
+export type ChangeUserRoleResult =
+  | { ok: true }
+  | { ok: false; error: "not_found" | "cannot_act_on_self" | "role_invalid" | "last_admin" | "no_change" };
+
+export type GenerateSignInLinkResult =
+  | { ok: true; verifyPath: string; expiresAtIso: string }
+  | { ok: false; error: "not_found" | "user_deactivated" | "rate_limited"; retryAfterSeconds?: number };

@@ -1,7 +1,7 @@
 // Public entry point for src/core/auth — the only path app/ (or any other
 // core family) may import through, per eslint-plugin-boundaries
 // (docs/adr/0003-module-boundary-enforcement.md).
-export { requestMagicLink, verifyMagicLink } from "./magic-link";
+export { requestMagicLink, verifyMagicLink, issueSignInLinkForUser } from "./magic-link";
 export {
   createSessionCookieValue,
   verifySessionCookie,
@@ -9,5 +9,5 @@ export {
   type SessionPayload,
   type Role,
 } from "./session";
-export { requireRole, AuthError } from "./role-guard";
+export { requireRole, requireActiveRole, AuthError } from "./role-guard";
 export { getDevMagicLink } from "./dev-link-store";

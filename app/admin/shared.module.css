@@ -531,3 +531,180 @@
   color: var(--color-status-not-sd);
   font-weight: 600;
 }
+
+/* --- G3: team user management -------------------------------------------- */
+
+.dangerButton {
+  composes: secondaryButton;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+.dangerButton:disabled {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+
+.roleSelect {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+}
+
+.roleSelect:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.roleSelect:disabled {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* --- Confirmation panel (destructive actions: deactivate) ---------------- */
+
+.confirmPanel {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 2px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 32rem;
+}
+
+.confirmHeading {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.confirmBody {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.confirmActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* --- Role picker (Add a team member) -------------------------------------- */
+
+.roleOptionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 40rem;
+}
+
+.roleOption {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.roleOptionSelected {
+  composes: roleOption;
+  border-color: var(--color-action);
+  background: var(--color-surface);
+}
+
+.roleOption:has(input:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.roleOptionText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.roleOptionLabel {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.roleOptionDescription {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+/* --- Sign-in link reveal --------------------------------------------------- */
+
+.linkRevealBox {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 2px solid var(--color-action);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 40rem;
+}
+
+.linkRevealHeading {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.linkRevealUrlRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.linkRevealUrl {
+  flex: 1;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-family: var(--font-data);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.linkRevealHint {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.emptyCellMuted {
+  color: var(--color-text-muted);
+}

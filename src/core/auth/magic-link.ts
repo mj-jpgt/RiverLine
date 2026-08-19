@@ -9,11 +9,19 @@ import type { Role } from "./session";
 
 const TOKEN_TTL_MINUTES = 15;
 
+// G3: on-demand admin-generated sign-in links (invite pathway, see
+// src/core/admin/actions.ts generateSignInLink). Longer than the 15-minute
+// self-requested window because the admin hands this URL to someone over
+// another channel (text, phone, in person) rather than it landing in an
+// inbox seconds after being requested.
+const INVITE_LINK_TTL_HOURS = 24;
+
 interface AllowlistedUser {
   id: string;
   email: string;
   jurisdictionId: string;
   role: Role;
+  deactivatedAt: string | null;
 }
 
 interface VerifiedLogin {
@@ -39,18 +47,23 @@ export async function requestMagicLink(emailRaw: string): Promise<{ requested: t
       email: string;
       jurisdiction_id: string;
       role: Role;
-    }>(`select id, email, jurisdiction_id, role from users where email = $1`, [email]);
+      deactivated_at: string | null;
+    }>(`select id, email, jurisdiction_id, role, deactivated_at from users where email = $1`, [email]);
     return rows[0]
       ? ({
           id: rows[0].id,
           email: rows[0].email,
           jurisdictionId: rows[0].jurisdiction_id,
           role: rows[0].role,
+          deactivatedAt: rows[0].deactivated_at,
         } satisfies AllowlistedUser)
       : null;
   });
 
-  if (!user) {
+  // Same response whether the email is unknown OR deactivated — response
+  // shape must never leak allowlist membership or account status
+  // (see the existing !user branch's comment above the function).
+  if (!user || user.deactivatedAt !== null) {
     return { requested: true };
   }
 
@@ -107,9 +120,16 @@ export async function verifyMagicLink(token: string): Promise<VerifiedLogin | nu
       email: string;
       jurisdiction_id: string;
       role: Role;
-    }>(`select id, email, jurisdiction_id, role from users where id = $1`, [row.user_id]);
+      deactivated_at: string | null;
+    }>(`select id, email, jurisdiction_id, role, deactivated_at from users where id = $1`, [row.user_id]);
     const user = userRows[0];
     if (!user) return null;
+    // Deactivated since the token was issued (or the token was an
+    // admin-generated invite link for a user deactivated before it was
+    // ever used): the token is now consumed (used_at set above) but
+    // refused — a deactivated account can never complete sign-in, whether
+    // via a self-requested link or an admin's on-demand invite link.
+    if (user.deactivated_at !== null) return null;
 
     return {
       userId: user.id,
@@ -118,4 +138,39 @@ export async function verifyMagicLink(token: string): Promise<VerifiedLogin | nu
       email: user.email,
     };
   });
+}
+
+/**
+ * Mints a single-use sign-in link for a SPECIFIC user, on demand — the
+ * no-email onboarding pathway (T-G3 / docs/BLOCKERS.md B4). Unlike
+ * requestMagicLink, this is never triggered by the user themselves and
+ * never goes through the email transport: an admin calls this (via
+ * src/core/admin/actions.ts generateSignInLink, which is responsible for
+ * authorization, jurisdiction scoping, rate limiting, and the audit_log
+ * write) and is handed the raw token back to build a URL that gets
+ * verified through the exact same /api/auth/verify route and
+ * verifyMagicLink() above as a real magic link — the only difference is
+ * how the token reached the person (handed to them directly, not emailed)
+ * and its longer expiry window (24h vs 15min), appropriate for a link
+ * relayed over another channel rather than clicked seconds after request.
+ *
+ * Never logs the raw token — the caller must not log it either (see
+ * generateSignInLink's own comment). Uses login_tokens + the same
+ * crypto primitives (generateOpaqueToken/hashToken) requestMagicLink uses;
+ * no new token machinery.
+ */
+export async function issueSignInLinkForUser(userId: string): Promise<{ token: string; expiresAt: Date }> {
+  const token = generateOpaqueToken();
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + INVITE_LINK_TTL_HOURS * 60 * 60 * 1000);
+
+  await withSystem((client) =>
+    client.query(`insert into login_tokens (user_id, token_hash, expires_at) values ($1, $2, $3)`, [
+      userId,
+      tokenHash,
+      expiresAt,
+    ]),
+  );
+
+  return { token, expiresAt };
 }

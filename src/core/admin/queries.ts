@@ -5,7 +5,7 @@
 import type { PoolClient } from "pg";
 import { withTenant } from "@/shared/db";
 import { isNonEmptyText, isValidAppealWindowDays } from "./pure";
-import type { CostTableListRow, JurisdictionSettings, ReadinessStatus } from "./types";
+import type { CostTableListRow, JurisdictionSettings, ReadinessStatus, TeamSummary, UserListRow, UserRole } from "./types";
 
 function toIsoDate(value: unknown): string {
   if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -129,11 +129,68 @@ export async function getReadinessStatus(jurisdictionId: string, userId: string 
       jurisdictionId,
     ]);
     const jur = jurRes.rows[0] as { ordinance_citation: string | null; letterhead_config: unknown } | undefined;
+    const team = await queryTeamSummary(client, jurisdictionId);
     return {
       costTableLoaded: activeVersion !== null,
       activeCostTableVersion: activeVersion,
       ordinanceCitationSet: isNonEmptyText(jur?.ordinance_citation ?? null),
       appealWindowSet: readAppealWindowDays(jur?.letterhead_config) !== null,
+      team,
     };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// G3: team user management
+// ---------------------------------------------------------------------------
+
+async function queryTeamSummary(client: PoolClient, jurisdictionId: string): Promise<TeamSummary> {
+  const res = await client.query(
+    `select role, count(*)::int as n
+     from users
+     where jurisdiction_id = $1 and deactivated_at is null
+     group by role`,
+    [jurisdictionId],
+  );
+  const counts: Record<string, number> = {};
+  for (const row of res.rows as { role: string; n: number }[]) {
+    counts[row.role] = row.n;
+  }
+  const activeAdmins = counts.admin ?? 0;
+  const activeAssessors = counts.assessor ?? 0;
+  const activeOfficials = counts.official ?? 0;
+  const activeViewers = counts.viewer ?? 0;
+  return {
+    activeTotal: activeAdmins + activeAssessors + activeOfficials + activeViewers,
+    activeAdmins,
+    activeAssessors,
+    activeOfficials,
+    activeViewers,
+  };
+}
+
+export async function getTeamSummary(jurisdictionId: string, userId: string | null): Promise<TeamSummary> {
+  return withTenant(jurisdictionId, userId, (client: PoolClient) => queryTeamSummary(client, jurisdictionId));
+}
+
+/** Every user in this jurisdiction (active and deactivated alike — the
+ * admin screen shows both, per task instructions "list current users ...
+ * active state"), newest-created first. */
+export async function listUsers(jurisdictionId: string, userId: string | null): Promise<UserListRow[]> {
+  return withTenant(jurisdictionId, userId, async (client: PoolClient) => {
+    const res = await client.query(
+      `select id, email, role, created_at, deactivated_at
+       from users
+       where jurisdiction_id = $1
+       order by created_at desc`,
+      [jurisdictionId],
+    );
+    return res.rows.map((row) => ({
+      id: row.id as string,
+      email: row.email as string,
+      role: row.role as UserRole,
+      createdAtIso: toIso(row.created_at),
+      deactivatedAtIso: row.deactivated_at ? toIso(row.deactivated_at) : null,
+    }));
   });
 }

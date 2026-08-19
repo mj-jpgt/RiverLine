@@ -9,7 +9,8 @@
 // residential / 7 non-residential SDE codes.
 import { z } from "zod";
 import { RESIDENTIAL_ELEMENTS, NON_RESIDENTIAL_ELEMENTS } from "@/core/capture";
-import type { CostTablePayload } from "./types";
+import type { CostTablePayload, UserRole } from "./types";
+import { ROLES } from "./types";
 
 export const RESIDENTIAL_CODES: readonly string[] = RESIDENTIAL_ELEMENTS.map((e) => e.code);
 export const NON_RESIDENTIAL_CODES: readonly string[] = NON_RESIDENTIAL_ELEMENTS.map((e) => e.code);
@@ -100,3 +101,32 @@ export function parseCostTablePayload(candidate: unknown): PayloadValidationResu
   });
   return { ok: false, fieldErrors };
 }
+
+// ---------------------------------------------------------------------------
+// G3: team user management
+// ---------------------------------------------------------------------------
+
+/** Normalized email format check — matches the shape requestMagicLink
+ * already normalizes to (trim + lowercase) before ever touching the
+ * database, so a user created here is always found by the exact string a
+ * real magic-link/sign-in-link request will look up. Not a full RFC 5322
+ * validator (nothing in this codebase needs one) — same pragmatic level
+ * app/api/auth/request-link/route.ts's zod schema (`z.string().email()`)
+ * already accepts for this exact allowlist. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function normalizeEmail(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+export function isValidEmail(value: string): boolean {
+  return EMAIL_PATTERN.test(value);
+}
+
+export function isValidUserRole(value: string): value is UserRole {
+  return (ROLES as readonly string[]).includes(value);
+}
+
+// ROLE_DESCRIPTIONS (the plain-language "Add a team member" copy) lives in
+// src/shared/roles.ts, not here — see that file's comment. src/core/admin/
+// index.ts re-exports it from there for server-side consumers.
