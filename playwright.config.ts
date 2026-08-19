@@ -21,7 +21,28 @@ export default defineConfig({
   // jurisdiction (zero cost_tables rows to start) and its own dedicated
   // dev server (`pnpm test:admin`, scripts/test-admin.mjs + PORT 3900),
   // never riverline_dev.
-  testIgnore: ["**/offline-capture.spec.ts", "**/determination.spec.ts", "**/a1-letters.spec.ts", "**/admin.spec.ts"],
+  // g4-intelligence.spec.ts (G4) is its own gate too, same reason: it needs
+  // a real cost_tables row on riverline_test to exercise the review queue
+  // and review screen (`node test/run-g4-e2e.mjs`, test/playwright.g4.config.ts,
+  // port 4950). Running it here against riverline_dev would always fail at
+  // "no cost table loaded," not a regression.
+  // users.spec.ts (T-G3) joined this list for the same reason: it throws at
+  // module load (not inside a test) when its own required env vars
+  // (USERS_EMAIL_ADMIN etc.) are unset, which aborts the ENTIRE root suite
+  // before any test runs — verified directly (G2, 2026-08-18): running the
+  // full root suite without this exclusion failed immediately with "Error:
+  // USERS_EMAIL_ADMIN is not set — this spec must run via `pnpm test:users`"
+  // and zero tests executed. It needs its own fresh jurisdiction and
+  // dedicated runner (`pnpm test:users`, scripts/test-users.mjs,
+  // playwright.users.config.ts), same shape as admin.spec.ts/g4-intelligence.spec.ts.
+  testIgnore: [
+    "**/offline-capture.spec.ts",
+    "**/determination.spec.ts",
+    "**/a1-letters.spec.ts",
+    "**/admin.spec.ts",
+    "**/g4-intelligence.spec.ts",
+    "**/users.spec.ts",
+  ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

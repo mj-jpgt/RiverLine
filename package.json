@@ -16,6 +16,8 @@
     "test:offline": "node scripts/test-offline.mjs",
     "test:determination": "node scripts/test-determination.mjs",
     "test:admin": "node scripts/test-admin.mjs",
+    "test:g4": "node test/run-g4-e2e.mjs",
+    "test:users": "node scripts/test-users.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/db/migrate.mjs",
@@ -29,6 +31,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.112.3",
     "idb": "8.0.3",
+    "motion": "13.1.0",
     "next": "15.5.23",
     "pg": "8.23.0",
     "react": "19.2.8",

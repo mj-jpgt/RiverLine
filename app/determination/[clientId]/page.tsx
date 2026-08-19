@@ -5,6 +5,7 @@ import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from
 import { getReviewDetail, listAuditLogForAssessment, groupPhotosByElement } from "@/core/determination";
 import type { ReviewDetail } from "@/core/determination";
 import { elementsForOccupancy } from "@/core/capture";
+import { getGpsDistanceMeters, computeReviewFlags } from "@/core/intelligence";
 import { OverrideElementControl } from "./_components/OverrideElementControl";
 import { OverrideValueControl } from "./_components/OverrideValueControl";
 import { AdoptAction } from "./_components/AdoptAction";
@@ -12,6 +13,14 @@ import { SupersedeAction } from "./_components/SupersedeAction";
 import { PhotoPanel } from "./_components/PhotoPanel";
 import motion from "@/shared/ui/motion.module.css";
 import styles from "./review.module.css";
+
+// G4 review flags (task instructions): read-time-only accuracy signals —
+// missing photo on a damaged element, ratio near a classification boundary,
+// a borderline ratio not backed by an appraisal, a GPS fix far from the
+// parcel, and a water-depth/water-line-element mismatch. Each flag is one
+// plain sentence plus what to check; flags never block AdoptAction
+// (AGENTS.md rule 12 — the tool proposes, the official adopts) and are
+// never persisted (src/core/intelligence/pure.ts computeReviewFlags).
 
 // M4 official review screen (T-C5): every input visible, per-element and
 // value overrides (audited, reason mandatory), explicit adopt with
@@ -113,7 +122,7 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
         <div className={styles.blockedPanel} role="status">
           <h2 className={styles.blockedHeading}>No calculation on file yet</h2>
           <p className={styles.blockedText}>
-            This assessment has no calculation to review — either the cost table isn&apos;t loaded for this
+            This assessment has no calculation to review. Either the cost table isn&apos;t loaded for this
             jurisdiction (see <span className={styles.blockedCode}>docs/BLOCKERS.md B1</span>) or structure attributes
             are incomplete. Nothing is lost; review this once a calculation exists.
           </p>
@@ -127,6 +136,18 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
   const isSuperseded = detail.determination?.status === "superseded";
   const auditEntries = await listAuditLogForAssessment(guarded.jurisdictionId, guarded.userId, detail.assessmentId);
   const valueSourceLabel = VALUE_SOURCE_LABELS[detail.valueSource] ?? detail.valueSource;
+
+  const gpsDistanceMeters = await getGpsDistanceMeters(guarded.jurisdictionId, guarded.userId, detail.assessmentId);
+  const flags = computeReviewFlags({
+    occupancyType: detail.occupancyType,
+    ratio: detail.ratio,
+    thresholdResult: detail.thresholdResult,
+    valueSource: detail.valueSource,
+    waterDepthInteriorIn: detail.waterDepthInteriorIn,
+    elements: detail.elements,
+    photos: detail.photos,
+    gpsDistanceMeters,
+  });
 
   return (
     <main className={`${styles.main} ${motion.pageEnter}`}>
@@ -144,7 +165,7 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
           <p className={styles.adoptedBannerText}>
             Adopted by {detail.determination?.adoptedByEmail ?? "unknown"} on{" "}
             {detail.determination?.adoptedAt ? new Date(detail.determination.adoptedAt).toLocaleString("en-US") : ""}.
-            This is the official finding of record — read-only. Use Supersede to issue a corrected determination.
+            This is the official finding of record, read-only. Use Supersede to issue a corrected determination.
           </p>
         </div>
       ) : null}
@@ -158,7 +179,7 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
 
       {detail.priorCalculationCount > 0 ? (
         <p className={styles.historyNote}>
-          This is calculation #{detail.priorCalculationCount + 1} for this assessment — recalculated after an
+          This is calculation #{detail.priorCalculationCount + 1} for this assessment, recalculated after an
           override. Earlier calculations remain on file (calculations are never edited or deleted, AGENTS.md rule
           10); see History below.
         </p>
@@ -173,8 +194,27 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
         </span>
         <p className={styles.legalLine}>The regulatory substantial damage threshold is 50% of market value.</p>
         {detail.thresholdResult === "BORDERLINE" ? (
-          <p className={styles.borderlineNote}>Within calculation tolerance — requires official review.</p>
+          <p className={styles.borderlineNote}>Within calculation tolerance. Requires official review.</p>
         ) : null}
+      </section>
+
+      <section className={styles.card} aria-label="Review flags">
+        <h2 className={styles.cardHeading}>Flags</h2>
+        {flags.length === 0 ? (
+          <p className={styles.flagsEmpty}>Nothing stood out. No accuracy flags on this assessment.</p>
+        ) : (
+          <ul className={styles.flagsList}>
+            {flags.map((flag) => (
+              <li key={flag.key} className={styles.flagItem}>
+                <p className={styles.flagSentence}>{flag.sentence}</p>
+                <p className={styles.flagCheck}>{flag.whatToCheck}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className={styles.flagsNote}>
+          Flags inform review. They never block adoption. Computed live from data already on file, never a new fact.
+        </p>
       </section>
 
       <section className={styles.card} aria-label="Calculation inputs">
@@ -209,7 +249,7 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
             <dt className={styles.dt}>Water depth</dt>
             <dd className={styles.dd}>
               {detail.waterDepthInteriorIn !== null ? `${detail.waterDepthInteriorIn}″ interior` : "Not recorded"}
-              {detail.waterDepthSource ? ` — ${WATER_DEPTH_SOURCE_LABELS[detail.waterDepthSource] ?? detail.waterDepthSource}` : ""}
+              {detail.waterDepthSource ? ` (${WATER_DEPTH_SOURCE_LABELS[detail.waterDepthSource] ?? detail.waterDepthSource})` : ""}
             </dd>
           </div>
         </dl>
@@ -231,12 +271,12 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
       <section className={styles.card} aria-label="Photos">
         <h2 className={styles.cardHeading}>Photos</h2>
         {detail.photos.length === 0 ? (
-          <p className={styles.noPhotoNote}>No photos on file for this assessment — flagged, not hidden.</p>
+          <p className={styles.noPhotoNote}>No photos on file for this assessment. Flagged, not hidden.</p>
         ) : (
           groupPhotosByElement(detail.photos, elementsForOccupancy(detail.occupancyType)).map((group) => (
             <div key={group.code} className={styles.photoGroup}>
               <h3 className={styles.photoGroupHeading}>{group.heading}</h3>
-              <PhotoPanel photos={group.photos} emptyLabel="No photos on file for this assessment — flagged, not hidden." />
+              <PhotoPanel photos={group.photos} emptyLabel="No photos on file for this assessment. Flagged, not hidden." />
             </div>
           ))
         )}
@@ -299,7 +339,7 @@ export default async function DeterminationReviewPage({ params }: { params: Prom
             {detail.determination.appealDeadlineDate === null ? (
               <div className={styles.blockedPanel} role="status">
                 <p className={styles.blockedText}>
-                  Appeal window not configured for this jurisdiction — see{" "}
+                  Appeal window not configured for this jurisdiction. See{" "}
                   <span className={styles.blockedCode}>docs/BLOCKERS.md B2</span> (ordinance). The determination is
                   adopted; the appeal deadline field is left blank rather than an invented number of days.
                 </p>
