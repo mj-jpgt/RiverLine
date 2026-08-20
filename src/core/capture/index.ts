@@ -10,12 +10,14 @@ export {
   DAMAGE_PCT_PRESETS,
   FOUNDATION_TYPES,
   isDraftComplete,
+  newPhotoUploadState,
 } from "./types";
 export type {
   WaterDepthSource,
   FoundationType,
   GpsFix,
   PhotoRecord,
+  PhotoUploadStatus,
   ElementCapture,
   SyncStatus,
   CaptureDraft,
@@ -51,13 +53,18 @@ export {
   savePhoto,
   getPhoto,
   getPhotosForDraft,
+  markPhotoUploadAttempt,
+  markPhotoUploaded,
 } from "./db";
 
 export { processPhoto, sha256Hex, MAX_LONGEST_EDGE_PX } from "./photo";
 export type { ProcessedPhoto } from "./photo";
 
 export { syncOne, syncAllQueued, registerSyncTriggers } from "./sync";
-export type { SyncResult } from "./sync";
+export type { SyncResult, PhotoUploadProgress } from "./sync";
+
+export { uploadPhoto, uploadPendingPhotosForDraft } from "./photo-upload";
+export type { PhotoUploadResult, UploadPendingPhotosResult } from "./photo-upload";
 
 export { buildSyncPayload } from "./payload";
 export type { SyncPayload, SyncPhotoPayload } from "./payload";

@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createHash } from "node:crypto";
 import path from "node:path";
 import type { PoolClient } from "pg";
 import { SESSION_COOKIE_NAME, verifySessionCookie, requireRole, AuthError } from "@/core/auth";
@@ -9,7 +8,6 @@ import { withTenant } from "@/shared/db";
 import { getStorageDriver } from "@/shared/storage";
 import { mergeScalarFields, resolveElementMerge, type ScalarSnapshot } from "../_lib/merge";
 import { checkRateLimit, rateLimitResponse } from "@/shared/security/rate-limit";
-import { MAX_PHOTO_BYTES, MAX_SYNC_BODY_BYTES, sniffImageType } from "@/shared/security/upload-validation";
 
 // Idempotent sync endpoint for the offline capture flow (src/core/capture/).
 // Keyed on assessments.client_id (schema/core.sql unique constraint) —
@@ -28,8 +26,21 @@ import { MAX_PHOTO_BYTES, MAX_SYNC_BODY_BYTES, sniffImageType } from "@/shared/s
 // behavior byte-for-byte; the supabase driver is what makes this route
 // deployable on Vercel's ephemeral filesystem.
 //
-// Payload is JSON + base64 photos, not multipart — see
-// src/core/capture/payload.ts's file header for the documented tradeoff.
+// F2 (2026-08-19, docs/journal/2026-08-19-f2-sync.md): this route no longer
+// writes photo bytes itself. It used to accept them inline as base64 JSON —
+// Vercel enforces a hard ~4.5MB request-body ceiling per serverless
+// invocation at the platform level, reproduced live returning
+// `413 FUNCTION_PAYLOAD_TOO_LARGE` (Vercel's own platform error, before this
+// route's code ever ran) for a realistic multi-photo assessment. Photo
+// bytes now upload individually beforehand, to
+// app/api/photos/upload/[id]/route.ts (raw binary, same content-addressed
+// key scheme). This route's job for each photo is now only to confirm that
+// upload actually landed (`getStorageDriver().exists(...)` on the same
+// deterministic key) before writing the `photos` row that references it —
+// never trusting the client's claim that a photo is ready without checking.
+//
+// Payload is JSON, metadata only (no photo bytes) — see
+// src/core/capture/payload.ts's file header for the full history/tradeoff.
 //
 // T-C5 added scope (specs/core/tasks.md §2.5, docs/testing/live-test-plan.md
 // OT-4): a SECOND device syncing the same client_id no longer overwrites the
@@ -54,8 +65,6 @@ const photoSchema = z.object({
   capturedAt: z.string(),
   gpsLat: z.number().nullable(),
   gpsLng: z.number().nullable(),
-  dataBase64: z.string(),
-  contentType: z.literal("image/jpeg"),
 });
 
 const bodySchema = z.object({
@@ -97,15 +106,24 @@ const bodySchema = z.object({
 const SYNC_LIMIT = 30;
 const SYNC_WINDOW_MS = 60 * 1000;
 
-async function writePhotoFile(jurisdictionId: string, sha256: string, base64: string): Promise<string> {
-  const storageKey = path.posix.join(jurisdictionId, `${sha256}.jpg`);
-  const bytes = Buffer.from(base64, "base64");
-  // Content-addressed: writing the same bytes to the same key is a safe
-  // no-op on retry (both drivers honor this — see
-  // src/shared/storage/local.ts and supabase.ts), so this does not need an
-  // existence check for correctness.
-  await getStorageDriver().put(storageKey, bytes, "image/jpeg");
-  return storageKey;
+// F2: the finalize payload is metadata only now (no photo bytes — see the
+// file header) so it stays at most a few hundred KB even for a maximal
+// 12-element, dozen-photo assessment. Deliberately a local constant, not
+// src/shared/security/upload-validation.ts's shared MAX_SYNC_BODY_BYTES
+// (48MB): that shared constant is also used by src/modules/a4-estimates'
+// unrelated JSON upload flow with its own, still-legitimate size budget —
+// see that file's updated comment for why this route doesn't reuse it. 2MB
+// is a coarse first-line guard (checked via Content-Length before the body
+// is even parsed) against a malformed or deliberately oversized JSON body,
+// not a limit any real payload should approach.
+const MAX_FINALIZE_BODY_BYTES = 2 * 1024 * 1024;
+
+/** The same content-addressed key app/api/photos/upload/[id]/route.ts
+ * writes to — computed here, never trusted from the client, so this route
+ * can verify (not assume) that a referenced photo's bytes actually exist
+ * before creating a `photos` row that points at them. */
+function photoStorageKey(jurisdictionId: string, sha256: string): string {
+  return path.posix.join(jurisdictionId, `${sha256.toLowerCase()}.jpg`);
 }
 
 export async function POST(request: Request) {
@@ -121,7 +139,7 @@ export async function POST(request: Request) {
     }
 
     const contentLength = Number(request.headers.get("content-length") ?? "0");
-    if (contentLength > MAX_SYNC_BODY_BYTES) {
+    if (contentLength > MAX_FINALIZE_BODY_BYTES) {
       return NextResponse.json({ error: "Sync payload is too large." }, { status: 413 });
     }
 
@@ -135,45 +153,27 @@ export async function POST(request: Request) {
     }
     const body = parsed.data;
 
-    // Verify every photo's declared sha256 against the actual received
-    // bytes before trusting it (client-computed hashes are a claim, not
-    // proof — DI-4 in docs/testing/live-test-plan.md). Reject the whole
-    // batch rather than silently accepting a mismatched photo.
-    for (const photo of body.photos) {
-      const bytes = Buffer.from(photo.dataBase64, "base64");
-
-      if (bytes.length > MAX_PHOTO_BYTES) {
-        return NextResponse.json(
-          { error: `Photo ${photo.id} exceeds the ${MAX_PHOTO_BYTES} byte limit.` },
-          { status: 413 },
-        );
-      }
-
-      // Content-type allowlist enforced by signature, not the client's
-      // claim: bodySchema only accepts contentType: "image/jpeg" (a
-      // request-shape check), but that field is attacker-controlled text —
-      // the actual bytes are what gets written to disk and served back.
-      // OWASP File Upload Cheat Sheet (retrieved 2026-08-17): validate file
-      // signatures, don't trust Content-Type.
-      if (sniffImageType(bytes) !== "jpeg") {
-        return NextResponse.json(
-          { error: `Photo ${photo.id} is not a valid JPEG — refusing to store unverified bytes.` },
-          { status: 400 },
-        );
-      }
-
-      const actualSha256 = createHash("sha256").update(bytes).digest("hex");
-      if (actualSha256 !== photo.sha256.toLowerCase()) {
-        return NextResponse.json(
-          { error: `Photo ${photo.id} sha256 mismatch — refusing to store unverified bytes.` },
-          { status: 400 },
-        );
-      }
-    }
-
+    // F2: bytes already went through app/api/photos/upload/[id]/route.ts
+    // (its own sha256 re-verification + magic-byte sniff happened there,
+    // against the real received bytes — this route never sees photo bytes
+    // at all anymore). What's left to verify here: that the upload this
+    // payload references actually happened, by checking the real storage
+    // driver for the exact content-addressed key it would have written to —
+    // never trusting the client's say-so that a photo is ready. A client
+    // that races ahead of its own uploads (a bug, not the documented flow —
+    // src/core/capture/sync.ts gates finalize on every photo reporting
+    // "uploaded" first) gets a clear, retryable error instead of a `photos`
+    // row pointing at bytes that don't exist.
     const storageKeys = new Map<string, string>();
     for (const photo of body.photos) {
-      const storageKey = await writePhotoFile(jurisdictionId, photo.sha256, photo.dataBase64);
+      const storageKey = photoStorageKey(jurisdictionId, photo.sha256);
+      const uploaded = await getStorageDriver().exists(storageKey);
+      if (!uploaded) {
+        return NextResponse.json(
+          { error: `Photo ${photo.id} was not uploaded yet. It will remain queued and retry.` },
+          { status: 409 },
+        );
+      }
       storageKeys.set(photo.id, storageKey);
     }
 

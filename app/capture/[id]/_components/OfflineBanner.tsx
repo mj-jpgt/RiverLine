@@ -10,13 +10,18 @@ interface OfflineBannerProps {
   queuedCount: number;
   errorMessage: string | null;
   onSyncNow: () => void;
+  /** F2: when a photo upload is actively in flight, show real progress
+   * instead of a generic "syncing" message — same photoProgress state that
+   * drives the complete screen's subheading (CaptureFlow.tsx), so this
+   * banner and that screen never tell two different stories at once. */
+  photoProgress?: { uploaded: number; total: number } | null;
 }
 
 // Persistent, never a toast (AGENTS.md rule 7; components.md "Offline
 // banner" row; ui-review-checklist.md Part A #7). Calm, not alarming
 // (direction.md "Smooth, not decorative" #3) — syncing/synced use neutral or
 // success color, only a real error uses --color-danger.
-export function OfflineBanner({ state, queuedCount, errorMessage, onSyncNow }: OfflineBannerProps) {
+export function OfflineBanner({ state, queuedCount, errorMessage, onSyncNow, photoProgress }: OfflineBannerProps) {
   if (state === "hidden") return null;
 
   const className =
@@ -28,13 +33,17 @@ export function OfflineBanner({ state, queuedCount, errorMessage, onSyncNow }: O
           ? styles.bannerSynced
           : styles.bannerSyncing;
 
+  const uploadingPhotos = photoProgress && photoProgress.uploaded < photoProgress.total;
+
   const text =
     state === "offline"
-      ? `Offline — ${queuedCount} assessment${queuedCount === 1 ? "" : "s"} queued`
+      ? `Offline. ${queuedCount} assessment${queuedCount === 1 ? "" : "s"} queued.`
       : state === "syncing"
-        ? `Syncing ${queuedCount} assessment${queuedCount === 1 ? "" : "s"}…`
+        ? uploadingPhotos
+          ? `Uploading photo ${photoProgress.uploaded + 1} of ${photoProgress.total}.`
+          : `Syncing ${queuedCount} assessment${queuedCount === 1 ? "" : "s"}.`
         : state === "error"
-          ? (errorMessage ?? "Sync failed — will keep this queued until you retry.")
+          ? (errorMessage ?? "Sync failed. It will stay queued until you retry.")
           : "Synced";
 
   const showSyncButton = state === "offline" || state === "error";

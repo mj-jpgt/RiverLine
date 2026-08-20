@@ -33,6 +33,17 @@ export interface GpsFix {
   accuracyM: number;
 }
 
+/** Per-photo upload state (F2: photos now upload individually to
+ * app/api/photos/upload/[id] BEFORE the draft's own sync payload is sent —
+ * see src/core/capture/photo-upload.ts. "uploaded" is durable/authoritative
+ * (the bytes are confirmed written to storage server-side); everything else
+ * is a client-local retry state, mirroring CaptureDraft's own
+ * syncStatus/syncAttempts/lastSyncError/lastAttemptAt shape so the same
+ * backoff policy (src/core/capture/backoff.ts) applies uniformly. Persisted
+ * (not just in-memory) specifically so a kill-mid-upload resume knows which
+ * photos are already confirmed on the server and skips re-uploading them. */
+export type PhotoUploadStatus = "pending" | "uploaded" | "error";
+
 /** One captured photo. Bytes live in the "photos" IndexedDB object store
  * (src/core/capture/db.ts); this is the metadata record referenced from a
  * draft's element/exterior photo id lists. */
@@ -46,6 +57,20 @@ export interface PhotoRecord {
   blob: Blob;
   width: number;
   height: number;
+  uploadStatus: PhotoUploadStatus;
+  uploadAttempts: number;
+  lastUploadError: string | null;
+  lastUploadAttemptAt: string | null;
+}
+
+/** Default upload-state fields for a freshly captured photo — used by every
+ * call site that constructs a PhotoRecord (app/capture/[id]/CaptureFlow.tsx)
+ * so the shape stays centralized in one place rather than repeated inline. */
+export function newPhotoUploadState(): Pick<
+  PhotoRecord,
+  "uploadStatus" | "uploadAttempts" | "lastUploadError" | "lastUploadAttemptAt"
+> {
+  return { uploadStatus: "pending", uploadAttempts: 0, lastUploadError: null, lastUploadAttemptAt: null };
 }
 
 export interface ElementCapture {

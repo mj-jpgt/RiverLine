@@ -89,9 +89,65 @@ export async function getPhoto(id: string): Promise<PhotoRecord | undefined> {
   return db.get("photos", id);
 }
 
+/** A photo written before F2's per-photo upload state existed (uploadStatus
+ * etc. added to PhotoRecord) reads back from IndexedDB without those fields
+ * — `idb`/IndexedDB has no per-field schema to enforce here, only whole
+ * object-store shape, so this is the one place that needs to know about it.
+ * Missing upload state defaults to "pending": correct and safe (never
+ * "uploaded", which would wrongly skip a real upload of a photo captured
+ * before this feature existed but whose draft never finished syncing). */
+function withUploadStateDefaults(photo: PhotoRecord): PhotoRecord {
+  if (photo.uploadStatus) return photo;
+  return {
+    ...photo,
+    uploadStatus: "pending",
+    uploadAttempts: 0,
+    lastUploadError: null,
+    lastUploadAttemptAt: null,
+  };
+}
+
 export async function getPhotosForDraft(clientId: string): Promise<PhotoRecord[]> {
   const db = await getDb();
-  return db.getAllFromIndex("photos", "clientId", clientId);
+  const photos = await db.getAllFromIndex("photos", "clientId", clientId);
+  return photos.map(withUploadStateDefaults);
+}
+
+/** Marks one photo's upload as in-flight or failed — same shape/purpose as
+ * markSyncAttempt below, but scoped to a single photo instead of the whole
+ * draft (src/core/capture/photo-upload.ts calls this around each per-photo
+ * POST to app/api/photos/upload/[id]). */
+export async function markPhotoUploadAttempt(
+  photoId: string,
+  status: "uploading" | "error",
+  error: string | null,
+): Promise<void> {
+  const db = await getDb();
+  const photo = await db.get("photos", photoId);
+  if (!photo) return;
+  const now = new Date().toISOString();
+  await db.put("photos", {
+    ...withUploadStateDefaults(photo),
+    uploadStatus: status === "error" ? "error" : "pending",
+    uploadAttempts: status === "error" ? (photo.uploadAttempts ?? 0) + 1 : (photo.uploadAttempts ?? 0),
+    lastUploadError: status === "error" ? error : null,
+    lastUploadAttemptAt: now,
+  });
+}
+
+/** Marks one photo as durably confirmed uploaded — the only state a resumed
+ * queue trusts to skip re-uploading a photo's bytes. */
+export async function markPhotoUploaded(photoId: string): Promise<void> {
+  const db = await getDb();
+  const photo = await db.get("photos", photoId);
+  if (!photo) return;
+  await db.put("photos", {
+    ...withUploadStateDefaults(photo),
+    uploadStatus: "uploaded",
+    uploadAttempts: 0,
+    lastUploadError: null,
+    lastUploadAttemptAt: new Date().toISOString(),
+  });
 }
 
 export async function markSynced(clientId: string): Promise<void> {

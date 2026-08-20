@@ -20,17 +20,31 @@
  * field photo, tight enough that a client sending raw/uncompressed
  * multi-megapixel captures (a bug, not malice) or a deliberately oversized
  * payload doesn't turn one sync call into an unbounded memory/disk write.
+ *
+ * Shared by two independent callers with two independent size budgets
+ * (src/modules/a4-estimates/actions.ts's scanned-page uploads, and — until
+ * F2 — app/api/capture/sync/route.ts's inline base64 photo bytes): this
+ * constant is deliberately left as-is here. F2 (docs/journal/
+ * 2026-08-19-f2-sync.md) needed a tighter, transport-specific ceiling for
+ * its new raw-binary per-photo upload endpoint (Vercel's ~4.5MB serverless
+ * body limit, discovered live) — that lives as its own local constant next
+ * to that route instead of changing this shared value out from under
+ * a4-estimates' unrelated, still-8MB-appropriate use case.
  */
 export const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 
 /**
- * 48MB overall request-body ceiling for the sync endpoint. Rationale: the
- * capture flow's element list tops out at 12 elements (docs/data-contracts/
- * sde-cost-tables.md) plus one required exterior shot, so at most ~13
- * photos per sync call; 13 × MAX_PHOTO_BYTES is well above realistic
- * traffic, so this ceiling exists as a coarse first-line guard (checked via
- * Content-Length before the body is even parsed) rather than the primary
- * control — the per-photo cap below is.
+ * 48MB overall request-body ceiling shared by two independent JSON-body
+ * endpoints (src/modules/a4-estimates' estimate upload, and — until F2 —
+ * app/api/capture/sync's inline photo bytes) as a coarse first-line guard
+ * (checked via Content-Length before the body is even parsed), not the
+ * primary control. F2 (docs/journal/2026-08-19-f2-sync.md): the capture
+ * sync/finalize endpoint no longer carries photo bytes at all (they upload
+ * individually beforehand — see MAX_PHOTO_BYTES's comment above and
+ * app/api/photos/upload/[id]/route.ts), so it now enforces its own much
+ * tighter, locally-defined body ceiling instead of this shared one — left
+ * unchanged here so a4-estimates' still-legitimate use of this value isn't
+ * silently affected by a capture-module-specific tightening.
  */
 export const MAX_SYNC_BODY_BYTES = 48 * 1024 * 1024;
 

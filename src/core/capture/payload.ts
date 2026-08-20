@@ -1,16 +1,22 @@
 // The wire format POSTed to /api/capture/sync. Shared between the client
 // (this file, pure — no fetch/idb) and documents what the server route
-// expects. Photos travel as base64 JSON, not multipart — documented choice
-// (see docs/journal/2026-08-17-c3-capture.md): this project has no chunked/
-// resumable upload requirement in MVP scope, downscaled photos are small
-// (~100-400KB after src/core/capture/photo.ts's 1600px-longest-edge
-// resize), and a single JSON body keeps the idempotent-upsert transaction in
-// app/api/capture/sync/route.ts simple (one parsed body, one transaction) at
-// the cost of ~33% base64 overhead on the wire — an acceptable MVP tradeoff
-// given sync only ever runs opportunistically in the foreground on a
-// connection, never during capture itself. A production swap to multipart
-// or direct-to-object-storage presigned upload is a compatible future change
-// that would not alter this payload's semantics.
+// expects.
+//
+// F2 (2026-08-19): this used to also carry every photo's base64 bytes
+// inline — the "production swap to multipart or direct-to-object-storage
+// presigned upload" this file's header previously flagged as a compatible
+// future change. That swap happened here: Vercel enforces a hard ~4.5MB
+// body ceiling per serverless invocation (platform-level, below this app's
+// own MAX_SYNC_BODY_BYTES check), reproduced live returning
+// `413 FUNCTION_PAYLOAD_TOO_LARGE` for a realistic multi-photo assessment —
+// see docs/journal/2026-08-19-f2-sync.md. Photo bytes now upload
+// individually first, via src/core/capture/photo-upload.ts to
+// app/api/photos/upload/[id] (raw binary body, content-addressed storage
+// key), gated by src/core/capture/sync.ts before this payload is ever
+// built. This payload is metadata only — a few KB regardless of photo
+// count — referencing each photo by id/sha256 so app/api/capture/sync/
+// route.ts can look up the storage key it already wrote and confirm it
+// exists before creating the `photos` row.
 import type { CaptureDraft } from "./types";
 import { getPhotosForDraft } from "./db";
 
@@ -21,8 +27,6 @@ export interface SyncPhotoPayload {
   capturedAt: string;
   gpsLat: number | null;
   gpsLng: number | null;
-  dataBase64: string;
-  contentType: "image/jpeg";
 }
 
 export interface SyncPayload {
@@ -48,37 +52,27 @@ export interface SyncPayload {
   photos: SyncPhotoPayload[];
 }
 
-function blobToBase64(blob: Blob): Promise<string> {
-  return blob.arrayBuffer().then((buf) => {
-    let binary = "";
-    const bytes = new Uint8Array(buf);
-    const chunkSize = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-    }
-    return btoa(binary);
-  });
-}
-
-/** Builds the sync payload for a completed draft, reading photo bytes from
- * IndexedDB. Only elements with a damage % are included (a draft can only
- * reach "queued" via completeDraft() once every element and the exterior
- * photo are present, per draft.ts canAdvanceFromStep's review-screen check,
- * but this is defensive rather than assuming that invariant here too). */
+/** Builds the sync payload for a completed draft. Only elements with a
+ * damage % are included (a draft can only reach "queued" via
+ * completeDraft() once every element and the exterior photo are present,
+ * per draft.ts canAdvanceFromStep's review-screen check, but this is
+ * defensive rather than assuming that invariant here too).
+ *
+ * Callers (src/core/capture/sync.ts's syncOne) are responsible for
+ * confirming every photo is already uploaded (PhotoRecord.uploadStatus ===
+ * "uploaded") before calling this — this function does not filter or
+ * re-check that itself, it just reports every photo attached to the draft,
+ * same as before F2. */
 export async function buildSyncPayload(draft: CaptureDraft): Promise<SyncPayload> {
   const photos = await getPhotosForDraft(draft.clientId);
-  const photoPayloads: SyncPhotoPayload[] = await Promise.all(
-    photos.map(async (p) => ({
-      id: p.id,
-      elementCode: p.elementCode,
-      sha256: p.sha256,
-      capturedAt: p.capturedAt,
-      gpsLat: p.gps?.lat ?? null,
-      gpsLng: p.gps?.lng ?? null,
-      dataBase64: await blobToBase64(p.blob),
-      contentType: "image/jpeg" as const,
-    })),
-  );
+  const photoPayloads: SyncPhotoPayload[] = photos.map((p) => ({
+    id: p.id,
+    elementCode: p.elementCode,
+    sha256: p.sha256,
+    capturedAt: p.capturedAt,
+    gpsLat: p.gps?.lat ?? null,
+    gpsLng: p.gps?.lng ?? null,
+  }));
 
   return {
     clientId: draft.clientId,

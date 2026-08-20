@@ -13,6 +13,7 @@ import {
   getResumableDraftForStructure,
   goToStep,
   newClientId,
+  newPhotoUploadState,
   registerSyncTriggers,
   removeExteriorPhoto,
   removePhotoFromElement,
@@ -30,6 +31,7 @@ import {
   type CaptureDraft,
   type FoundationType,
   type Occupancy,
+  type PhotoUploadProgress,
   type WaterDepthSource,
 } from "@/core/capture";
 import type { RegistryStructureDetail } from "@/core/registry";
@@ -67,6 +69,12 @@ export function CaptureFlow({
   const [justSynced, setJustSynced] = useState(false);
   const [queuedCount, setQueuedCount] = useState(0);
   const [completing, setCompleting] = useState(false);
+  // F2: live "uploading N of M" state for whichever draft is currently mid
+  // sync attempt (src/core/capture/sync.ts's onPhotoProgress callback).
+  // null whenever no photo upload is in flight for the CURRENTLY DISPLAYED
+  // draft — syncAllQueued can process other queued drafts too, but this
+  // screen only shows progress for its own clientId, filtered below.
+  const [photoProgress, setPhotoProgress] = useState<{ uploaded: number; total: number } | null>(null);
   const draftRef = useRef<CaptureDraft | null>(null);
 
   // ---- draft load / create --------------------------------------------
@@ -166,8 +174,18 @@ export function CaptureFlow({
     async (options: { force?: boolean } = {}) => {
       setSyncing(true);
       setSyncError(null);
-      const results = await syncAllQueued(options);
+      setPhotoProgress(null);
+      const onPhotoProgress = (progress: PhotoUploadProgress) => {
+        // Only reflect progress for the draft this screen is currently
+        // showing — syncAllQueued can walk through other queued drafts too,
+        // and their progress isn't this screen's story to tell.
+        if (draftRef.current?.clientId === progress.clientId) {
+          setPhotoProgress({ uploaded: progress.uploaded, total: progress.total });
+        }
+      };
+      const results = await syncAllQueued({ ...options, onPhotoProgress });
       setSyncing(false);
+      setPhotoProgress(null);
       await refreshQueueCount();
       // A skipped attempt (still within backoff cooldown, or already
       // in-flight) returns ok:false with no error message — not a real
@@ -263,6 +281,28 @@ export function CaptureFlow({
 
   const isComplete = draft.completedAt !== null;
 
+  // F2 fix for the reported contradictory copy: this screen used to have
+  // its own separate `draft.syncStatus === "synced" ? ... : online ? ...`
+  // chain that never checked `syncError` at all, so a real sync failure
+  // could show "Saved on this device — syncing now." at the exact same
+  // moment the banner above showed "Sync failed". One function, the same
+  // state (syncError/syncing/online/photoProgress) that already drives
+  // `bannerState` above, is now the only source of truth for what this
+  // subheading says — a real error always wins and is never masked by a
+  // stale "syncing now".
+  const completeSubheading: string =
+    draft.syncStatus === "synced"
+      ? "Synced to the server."
+      : syncError
+        ? syncError
+        : syncing
+          ? photoProgress && photoProgress.uploaded < photoProgress.total
+            ? `Saved on this device. Uploading photo ${photoProgress.uploaded + 1} of ${photoProgress.total}.`
+            : "Saved on this device. Syncing now."
+          : !online
+            ? "Saved on this device. It will sync automatically once you are back online, or tap Sync now above."
+            : "Saved on this device. Queued to sync.";
+
   return (
     <div className={styles.shell}>
       <OfflineBanner
@@ -270,18 +310,13 @@ export function CaptureFlow({
         queuedCount={queuedCount}
         errorMessage={syncError}
         onSyncNow={() => void runSync({ force: true })}
+        photoProgress={photoProgress}
       />
 
       {isComplete ? (
         <div className={styles.completeState}>
           <h1 className={styles.completeHeading}>Assessment complete</h1>
-          <p className={styles.subheading}>
-            {draft.syncStatus === "synced"
-              ? "Synced to the server."
-              : online
-                ? "Saved on this device — syncing now."
-                : "Saved on this device. It will sync automatically once you're back online, or tap “Sync now” above."}
-          </p>
+          <p className={styles.subheading}>{completeSubheading}</p>
           <div className={styles.completeActions}>
             {draft.syncStatus === "synced" ? (
               // The calculation trigger (M3/T-C4): once synced, the 50%-rule
@@ -352,6 +387,7 @@ export function CaptureFlow({
                         blob: processed.blob,
                         width: processed.width,
                         height: processed.height,
+                        ...newPhotoUploadState(),
                       });
                       await persist((d) => addPhotoToElement(d, screen.code, id));
                     })();
@@ -376,6 +412,7 @@ export function CaptureFlow({
                         blob: processed.blob,
                         width: processed.width,
                         height: processed.height,
+                        ...newPhotoUploadState(),
                       });
                       await persist((d) => addExteriorPhoto(d, id));
                     })();

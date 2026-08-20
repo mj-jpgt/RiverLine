@@ -17,9 +17,16 @@ import { createClient } from "@supabase/supabase-js";
 import type { StorageDriver, StoredObject } from "./types";
 
 export function createSupabaseStorageDriver(): StorageDriver {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const bucket = process.env.STORAGE_BUCKET;
+  // F2 (2026-08-19): trim every value read here — a stray invisible
+  // character (a leading UTF-8 BOM was the actual live incident; see
+  // src/shared/storage/index.ts's normalizeEnvValue comment for the full
+  // story) on any of these three is otherwise either a confusing runtime
+  // throw deep inside the Supabase SDK's own header handling (the service
+  // role key) or a URL constructor failure (the URL) — neither points
+  // anywhere near "check for a stray byte in this env var."
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const bucket = process.env.STORAGE_BUCKET?.trim();
 
   if (!url || !serviceRoleKey) {
     throw new Error(
