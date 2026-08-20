@@ -3,6 +3,38 @@
 This is a decision, already made. Agents apply it. Do not re-decide, do not
 "improve" it, do not add a flourish because a surface looks plain.
 
+## v2 amendment (2026-08-18, project owner directive via orchestrator)
+
+The owner reviewed the built app and directed an evolution. These points
+override anything below that conflicts. Everything not named here stands.
+
+1. Palette: white, blue, gray. Cool near-white surfaces, a strong blue
+   accent family, grays for structure. Values still come from real cited
+   sources (USWDS grades preferred). No new colors beyond status colors.
+2. Identity: the app should read as a flood instrument, not a generic tool.
+   A restrained water motif is now permitted on the landing page, the home
+   header, and section headers: an animated water line, level gauge, or
+   slow current rendered in CSS/SVG/canvas. Subtle, monochrome-blue, never
+   busy. NO stock video files, NO emojis anywhere, no illustration packs.
+3. Type: replace default-feeling text with a real pairing loaded via
+   next/font: Public Sans (UI; USWDS's own face, keeps the institutional
+   register) and IBM Plex Mono or equivalent for data/figures. Weights may
+   be more confident than v1. Sunlight legibility rules still bind capture.
+4. Motion: text and surface entrance transitions are now permitted on
+   non-field surfaces (landing, home, dashboard, admin): short fades and
+   rises, staggered lists, number count-ups on stats. The `motion` package
+   (successor to framer-motion) is APPROVED as a dependency (ADR required).
+   Hard limits stand: nothing bouncy or springy-cute, everything under
+   ~300ms feel, prefers-reduced-motion kills all of it, and the CAPTURE
+   FLOW keeps v1 rules (functional motion only, one decision per screen).
+5. Component/pattern sources: take patterns from validated public sources
+   (21st.dev, shadcn/ui, USWDS patterns) and log provenance per component
+   in the journal. Adapt everything to tokens; never paste a foreign
+   aesthetic wholesale. On-theme means: minimal, cool, institutional,
+   water-adjacent.
+6. The two acceptance questions at the bottom of this file still decide
+   every merge. The second one now has teeth: bland is a failure.
+
 ## The commitment
 
 **An official instrument, not a product.** RiverLine is used by a municipal
