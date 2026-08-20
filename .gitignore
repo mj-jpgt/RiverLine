@@ -27,3 +27,5 @@ public/swe-worker*.js.map
 
 .vercel
 .env*
+
+.scratch-*/

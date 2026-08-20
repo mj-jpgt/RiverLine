@@ -79,12 +79,16 @@ export function middleware(request: NextRequest) {
     // this codebase has no inline <script> or onClick="" HTML, only
     // React-bundled JS, which the nonce + strict-dynamic covers.
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-    // No style-src 'unsafe-inline' kept either: AGENTS.md's UI rules forbid
-    // inline styles/arbitrary values codebase-wide, and grepping app/ for
-    // style={{ or dangerouslySetInnerHTML found zero matches (verified
-    // 2026-08-17) — there is nothing here that needs it. The nonce covers
-    // any <style> tag Next.js itself manages.
-    `style-src 'self' 'nonce-${nonce}'`,
+    // style-src allows 'unsafe-inline' (2026-08-18): the design v2 motion
+    // library (motion, framer-motion's successor) animates by setting inline
+    // style attributes at runtime, which CSP only permits via 'unsafe-inline'.
+    // Style attributes cannot be nonced or hashed (those apply only to <style>
+    // elements), and a nonce on this directive would disable 'unsafe-inline'
+    // entirely, so the nonce is dropped here. This is scoped to STYLES only.
+    // script-src stays strict (nonce + strict-dynamic, no 'unsafe-inline'):
+    // that is the injection surface that matters. Style-only inline is a
+    // widely accepted tradeoff for any animation/CSS-in-JS library.
+    "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self'",
     "connect-src 'self'",

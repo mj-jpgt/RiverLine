@@ -78,6 +78,7 @@ const config = [
       // Vendored tesseract.js worker/core assets, self-hosted for CSP
       // compliance (ADR 0007). Minified third-party code — not ours to lint.
       "public/tesseract-assets/**",
+      ".scratch-*/**",
       "playwright-report/**",
       "test-results/**",
       "*.tsbuildinfo",
